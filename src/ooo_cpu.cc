@@ -1,3 +1,4 @@
+#include <chrono>
 #include "ooo_cpu.h"
 #include "set.h"
 
@@ -108,7 +109,18 @@ void O3_CPU::read_from_trace()
 		    num_branch++;
 		    
 		    // handle branch prediction & branch predictor update
+		    auto branch_prediction_start = std::chrono::steady_clock::now();
 		    uint8_t branch_prediction = predict_branch(IFETCH_BUFFER.entry[ifetch_buffer_index].ip);
+		    auto branch_prediction_end = std::chrono::steady_clock::now();
+
+		    if (warmup_complete[cpu]) {
+		        branch_prediction_latency_ns += static_cast<uint64_t>(
+		            std::chrono::duration_cast<std::chrono::nanoseconds>(
+		                branch_prediction_end - branch_prediction_start
+		            ).count()
+		        );
+		        branch_prediction_latency_samples++;
+		    }
 		    
 		    if(IFETCH_BUFFER.entry[ifetch_buffer_index].branch_taken != branch_prediction)
 		      {
@@ -349,7 +361,18 @@ void O3_CPU::read_from_trace()
                         num_branch++;
 
 			// handle branch prediction & branch predictor update
+			auto branch_prediction_start = std::chrono::steady_clock::now();
 			uint8_t branch_prediction = predict_branch(IFETCH_BUFFER.entry[ifetch_buffer_index].ip);
+			auto branch_prediction_end = std::chrono::steady_clock::now();
+
+			if (warmup_complete[cpu]) {
+			    branch_prediction_latency_ns += static_cast<uint64_t>(
+			        std::chrono::duration_cast<std::chrono::nanoseconds>(
+			            branch_prediction_end - branch_prediction_start
+			        ).count()
+			    );
+			    branch_prediction_latency_samples++;
+			}
 			uint64_t predicted_branch_target = IFETCH_BUFFER.entry[ifetch_buffer_index].branch_target;
 			if(branch_prediction == 0)
 			  {

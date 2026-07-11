@@ -79,6 +79,8 @@ class O3_CPU {
     uint8_t  fetch_stall;
     uint64_t fetch_resume_cycle;
     uint64_t num_branch, branch_mispredictions;
+    uint64_t branch_prediction_latency_ns,
+             branch_prediction_latency_samples;
     uint64_t total_rob_occupancy_at_branch_mispredict;
   uint64_t total_branch_types[8];
 
@@ -129,6 +131,8 @@ class O3_CPU {
 	fetch_resume_cycle = 0;
         num_branch = 0;
         branch_mispredictions = 0;
+        branch_prediction_latency_ns = 0;
+        branch_prediction_latency_samples = 0;
 	for(uint32_t i=0; i<8; i++)
 	  {
 	    total_branch_types[i] = 0;

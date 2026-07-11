@@ -102,6 +102,23 @@ void print_branch_stats()
         cout << "% MPKI: " << (1000.0*ooo_cpu[i].branch_mispredictions)/(ooo_cpu[i].num_retired - ooo_cpu[i].warmup_instructions);
 	cout << " Average ROB Occupancy at Mispredict: " << (1.0*ooo_cpu[i].total_rob_occupancy_at_branch_mispredict)/ooo_cpu[i].branch_mispredictions << endl << endl;
 	
+	double average_predictor_lookup_latency_ns = 0.0;
+	if (ooo_cpu[i].branch_prediction_latency_samples != 0) {
+	    average_predictor_lookup_latency_ns =
+	        static_cast<double>(ooo_cpu[i].branch_prediction_latency_ns) /
+	        static_cast<double>(ooo_cpu[i].branch_prediction_latency_samples);
+	}
+
+	cout << "CPU " << i
+	     << " Average Predictor Lookup Latency (ns): "
+	     << average_predictor_lookup_latency_ns
+	     << endl;
+
+	cout << "CPU " << i
+	     << " Predictor Lookup Samples: "
+	     << ooo_cpu[i].branch_prediction_latency_samples
+	     << endl << endl;
+
 	cout << "Branch types" << endl;
 	cout << "NOT_BRANCH: " << ooo_cpu[i].total_branch_types[0] << " " << (100.0*ooo_cpu[i].total_branch_types[0])/(ooo_cpu[i].num_retired - ooo_cpu[i].begin_sim_instr) << "%" << endl;
 	cout << "BRANCH_DIRECT_JUMP: " << ooo_cpu[i].total_branch_types[1] << " " << (100.0*ooo_cpu[i].total_branch_types[1])/(ooo_cpu[i].num_retired - ooo_cpu[i].begin_sim_instr) << "%" << endl;
@@ -197,6 +214,8 @@ void finish_warmup()
         // reset branch stats
         ooo_cpu[i].num_branch = 0;
         ooo_cpu[i].branch_mispredictions = 0;
+        ooo_cpu[i].branch_prediction_latency_ns = 0;
+        ooo_cpu[i].branch_prediction_latency_samples = 0;
 	ooo_cpu[i].total_rob_occupancy_at_branch_mispredict = 0;
 
 	for(uint32_t j=0; j<8; j++)
