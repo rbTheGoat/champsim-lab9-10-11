@@ -1,0 +1,7 @@
+Random seed: 2026
+Trace pool size: 15
+Selected traces for the 4-core configuration:
+Core 0: 403.gcc-16B.champsimtrace.xz
+Core 1: 456.hmmer-327B.champsimtrace.xz
+Core 2: 605.mcf_s-1644B.champsimtrace.xz
+Core 3: 621.wrf_s-8100B.champsimtrace.xz
