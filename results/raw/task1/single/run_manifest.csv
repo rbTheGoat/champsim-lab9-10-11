@@ -1,0 +1,17 @@
+predictor,trace,binary,result_file,timing_file
+bimodal,401.bzip2-277B.champsimtrace.xz,bimodal-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/bimodal__401.bzip2-277B.txt,results/raw/task1/single/timing/bimodal__401.bzip2-277B.txt
+bimodal,403.gcc-16B.champsimtrace.xz,bimodal-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/bimodal__403.gcc-16B.txt,results/raw/task1/single/timing/bimodal__403.gcc-16B.txt
+bimodal,605.mcf_s-665B.champsimtrace.xz,bimodal-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/bimodal__605.mcf_s-665B.txt,results/raw/task1/single/timing/bimodal__605.mcf_s-665B.txt
+bimodal,619.lbm_s-3766B.champsimtrace.xz,bimodal-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/bimodal__619.lbm_s-3766B.txt,results/raw/task1/single/timing/bimodal__619.lbm_s-3766B.txt
+gshare,401.bzip2-277B.champsimtrace.xz,gshare-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/gshare__401.bzip2-277B.txt,results/raw/task1/single/timing/gshare__401.bzip2-277B.txt
+gshare,403.gcc-16B.champsimtrace.xz,gshare-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/gshare__403.gcc-16B.txt,results/raw/task1/single/timing/gshare__403.gcc-16B.txt
+gshare,605.mcf_s-665B.champsimtrace.xz,gshare-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/gshare__605.mcf_s-665B.txt,results/raw/task1/single/timing/gshare__605.mcf_s-665B.txt
+gshare,619.lbm_s-3766B.champsimtrace.xz,gshare-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/gshare__619.lbm_s-3766B.txt,results/raw/task1/single/timing/gshare__619.lbm_s-3766B.txt
+hashed_perceptron,401.bzip2-277B.champsimtrace.xz,hashed_perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/hashed_perceptron__401.bzip2-277B.txt,results/raw/task1/single/timing/hashed_perceptron__401.bzip2-277B.txt
+hashed_perceptron,403.gcc-16B.champsimtrace.xz,hashed_perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/hashed_perceptron__403.gcc-16B.txt,results/raw/task1/single/timing/hashed_perceptron__403.gcc-16B.txt
+hashed_perceptron,605.mcf_s-665B.champsimtrace.xz,hashed_perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/hashed_perceptron__605.mcf_s-665B.txt,results/raw/task1/single/timing/hashed_perceptron__605.mcf_s-665B.txt
+hashed_perceptron,619.lbm_s-3766B.champsimtrace.xz,hashed_perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/hashed_perceptron__619.lbm_s-3766B.txt,results/raw/task1/single/timing/hashed_perceptron__619.lbm_s-3766B.txt
+perceptron,401.bzip2-277B.champsimtrace.xz,perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/perceptron__401.bzip2-277B.txt,results/raw/task1/single/timing/perceptron__401.bzip2-277B.txt
+perceptron,403.gcc-16B.champsimtrace.xz,perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/perceptron__403.gcc-16B.txt,results/raw/task1/single/timing/perceptron__403.gcc-16B.txt
+perceptron,605.mcf_s-665B.champsimtrace.xz,perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/perceptron__605.mcf_s-665B.txt,results/raw/task1/single/timing/perceptron__605.mcf_s-665B.txt
+perceptron,619.lbm_s-3766B.champsimtrace.xz,perceptron-no-no-no-no-lru-1core,results/raw/task1/single/simulator_output/perceptron__619.lbm_s-3766B.txt,results/raw/task1/single/timing/perceptron__619.lbm_s-3766B.txt
