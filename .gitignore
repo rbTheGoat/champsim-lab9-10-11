@@ -1,0 +1,23 @@
+prefetcher/l1i_prefetcher.cc
+prefetcher/l1d_prefetcher.cc
+prefetcher/l2c_prefetcher.cc
+prefetcher/llc_prefetcher.cc
+branch/branch_predictor.cc
+replacement/llc_replacement.cc
+
+inc/champsim.h.bak
+
+bin/
+obj/
+
+# Assignment-generated files
+dpc3_traces/
+bin/
+obj/
+results_*M/
+results_4core_*M/
+*.xz
+*.o
+*.out
+*.log
+__pycache__/
