@@ -1,0 +1,35 @@
+ChampSim Assignment Baseline Configuration
+
+Core configuration:
+- Baseline core count: 1
+- Multicore comparison: 4 cores
+
+Cache hierarchy:
+- L1 instruction cache: 32 KB, 8-way
+- L1 data cache: 32 KB, 8-way
+- L2 cache: 256 KB, 8-way
+- LLC/L3 cache: 4 MB total, 16-way
+- Cache block size: 64 bytes
+
+Replacement policies:
+- L1 instruction cache: LRU
+- L1 data cache: LRU
+- L2 cache: LRU
+- Baseline LLC policy: LRU
+
+Macro values:
+- L1I_SET = 64
+- L1I_WAY = 8
+- L1D_SET = 64
+- L1D_WAY = 8
+- L2C_SET = 512
+- L2C_WAY = 8
+- LLC_SET = 4096
+- LLC_WAY = 16
+- BLOCK_SIZE = 64
+- LOG2_BLOCK_SIZE = 6
+
+Notes:
+- LLC capacity is kept fixed at 4 MB for both single-core and 4-core runs.
+- Block size remains 64 B because the assignment does not specify alternate
+  block sizes for Task 2(d).
