@@ -21,3 +21,6 @@ results_4core_*M/
 *.out
 *.log
 __pycache__/
+
+# wget temporary logs
+wget-log*
