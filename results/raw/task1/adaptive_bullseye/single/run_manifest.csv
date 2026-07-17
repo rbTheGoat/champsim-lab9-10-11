@@ -1,0 +1,5 @@
+predictor,trace,binary,result_file,timing_file
+adaptive_bullseye,401.bzip2-277B.champsimtrace.xz,adaptive_bullseye-no-no-no-no-lru-1core,results/raw/task1/adaptive_bullseye/single/simulator_output/adaptive_bullseye__401.bzip2-277B.txt,results/raw/task1/adaptive_bullseye/single/timing/adaptive_bullseye__401.bzip2-277B.txt
+adaptive_bullseye,403.gcc-16B.champsimtrace.xz,adaptive_bullseye-no-no-no-no-lru-1core,results/raw/task1/adaptive_bullseye/single/simulator_output/adaptive_bullseye__403.gcc-16B.txt,results/raw/task1/adaptive_bullseye/single/timing/adaptive_bullseye__403.gcc-16B.txt
+adaptive_bullseye,605.mcf_s-665B.champsimtrace.xz,adaptive_bullseye-no-no-no-no-lru-1core,results/raw/task1/adaptive_bullseye/single/simulator_output/adaptive_bullseye__605.mcf_s-665B.txt,results/raw/task1/adaptive_bullseye/single/timing/adaptive_bullseye__605.mcf_s-665B.txt
+adaptive_bullseye,619.lbm_s-3766B.champsimtrace.xz,adaptive_bullseye-no-no-no-no-lru-1core,results/raw/task1/adaptive_bullseye/single/simulator_output/adaptive_bullseye__619.lbm_s-3766B.txt,results/raw/task1/adaptive_bullseye/single/timing/adaptive_bullseye__619.lbm_s-3766B.txt
