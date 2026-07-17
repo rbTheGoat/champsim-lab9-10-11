@@ -1,0 +1,103 @@
+Building multi-core ChampSim...
+
+rm -f -r obj
+Generating dependencies for src/uncore.cc...
+Compiling src/uncore.cc...
+Generating dependencies for src/cache.cc...
+Compiling src/cache.cc...
+src/cache.cc: In member function ‘void CACHE::handle_fill()’:
+src/cache.cc:129:11: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  129 |           if (cache_type == IS_L1I)
+      |           ^~
+src/cache.cc:131:13: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  131 |             if (cache_type == IS_L1D)
+      |             ^~
+src/cache.cc: In member function ‘void CACHE::handle_writeback()’:
+src/cache.cc:459:19: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  459 |                   if (cache_type == IS_L1I)
+      |                   ^~
+src/cache.cc:461:21: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  461 |                     if (cache_type == IS_L1D)
+      |                     ^~
+src/cache.cc: In member function ‘void CACHE::handle_read()’:
+src/cache.cc:530:7: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  530 |       if (read_cpu == NUM_CPUS)
+      |       ^~
+src/cache.cc:534:9: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  534 |         if ((RQ.entry[RQ.head].event_cycle <= current_core_cycle[read_cpu]) && (RQ.occupancy > 0)) {
+      |         ^~
+src/cache.cc: In member function ‘void CACHE::handle_prefetch()’:
+src/cache.cc:833:7: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  833 |       if (prefetch_cpu == NUM_CPUS)
+      |       ^~
+src/cache.cc:837:9: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  837 |         if ((PQ.entry[PQ.head].event_cycle <= current_core_cycle[prefetch_cpu]) && (PQ.occupancy > 0)) {
+      |         ^~
+Generating dependencies for src/ooo_cpu.cc...
+Compiling src/ooo_cpu.cc...
+src/ooo_cpu.cc: In member function ‘void O3_CPU::add_load_queue(uint32_t, uint32_t)’:
+src/ooo_cpu.cc:1263:17: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+ 1263 |                 if (LQ.entry[lq_index].producer_id != UINT64_MAX)
+      |                 ^~
+src/ooo_cpu.cc:1266:21: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+ 1266 |                     mem_RAW_dependency(i, rob_index, data_index, lq_index);
+      |                     ^~~~~~~~~~~~~~~~~~
+src/ooo_cpu.cc:1271:17: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+ 1271 |                 if (LQ.entry[lq_index].producer_id != UINT64_MAX)
+      |                 ^~
+src/ooo_cpu.cc:1274:21: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+ 1274 |                     mem_RAW_dependency(i, rob_index, data_index, lq_index);
+      |                     ^~~~~~~~~~~~~~~~~~
+src/ooo_cpu.cc:1277:17: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+ 1277 |                 if (LQ.entry[lq_index].producer_id != UINT64_MAX)
+      |                 ^~
+src/ooo_cpu.cc:1280:21: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+ 1280 |                     mem_RAW_dependency(i, rob_index, data_index, lq_index);
+      |                     ^~~~~~~~~~~~~~~~~~
+src/ooo_cpu.cc: In member function ‘void O3_CPU::complete_instr_fetch(PACKET_QUEUE*, uint8_t)’:
+src/ooo_cpu.cc:1881:18: warning: unused variable ‘instruction_physical_address’ [-Wunused-variable]
+ 1881 |         uint64_t instruction_physical_address = (queue->entry[index].instruction_pa << LOG2_PAGE_SIZE) | (complete_ip & ((1 << LOG2_PAGE_SIZE) - 1));
+      |                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Generating dependencies for src/main.cc...
+Compiling src/main.cc...
+In file included from /usr/include/getopt.h:24,
+                 from src/main.cc:3:
+/usr/include/features.h:196:3: warning: #warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE" [-Wcpp]
+  196 | # warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+      |   ^~~~~~~
+src/main.cc: In function ‘uint64_t va_to_pa(uint32_t, uint64_t, uint64_t, uint64_t, uint8_t)’:
+src/main.cc:363:48: warning: variable ‘pr2’ set but not used [-Wunused-but-set-variable]
+  363 |             map <uint64_t, uint64_t>::iterator pr2 = recent_page.begin();
+      |                                                ^~~
+Generating dependencies for src/dram_controller.cc...
+Compiling src/dram_controller.cc...
+Generating dependencies for src/block.cc...
+Compiling src/block.cc...
+Generating dependencies for branch/branch_predictor.cc...
+Compiling branch/branch_predictor.cc...
+Generating dependencies for replacement/llc_replacement.cc...
+Compiling replacement/llc_replacement.cc...
+Generating dependencies for replacement/base_replacement.cc...
+Compiling replacement/base_replacement.cc...
+Generating dependencies for prefetcher/l1i_prefetcher.cc...
+Compiling prefetcher/l1i_prefetcher.cc...
+Generating dependencies for prefetcher/l1d_prefetcher.cc...
+Compiling prefetcher/l1d_prefetcher.cc...
+Generating dependencies for prefetcher/l2c_prefetcher.cc...
+Compiling prefetcher/l2c_prefetcher.cc...
+Generating dependencies for prefetcher/llc_prefetcher.cc...
+Compiling prefetcher/llc_prefetcher.cc...
+Generating dependencies for prefetcher/kpcp_util.cc...
+Compiling prefetcher/kpcp_util.cc...
+Linking bin/champsim...
+
+[1mChampSim is successfully built
+Branch Predictor: gshare
+L1I Prefetcher: no
+L1D Prefetcher: no
+L2C Prefetcher: no
+LLC Prefetcher: no
+LLC Replacement: lru
+Cores: 4
+Binary: bin/gshare-no-no-no-no-lru-4core
+
