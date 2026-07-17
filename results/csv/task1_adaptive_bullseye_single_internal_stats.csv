@@ -1,0 +1,5 @@
+predictor,trace,final_admission_threshold,threshold_adjustments,base_miss_rate_percent,h2p_occupancy,h2p_capacity,h2p_occupancy_percent,h2p_admissions,h2p_overrides,h2p_override_accuracy_percent
+adaptive_bullseye,401.bzip2-277B.champsimtrace.xz,128,8,1.646172,4,64,6.25,4,480148,93.548031
+adaptive_bullseye,403.gcc-16B.champsimtrace.xz,128,8,0.126207,0,64,0.0,0,0,0.0
+adaptive_bullseye,605.mcf_s-665B.champsimtrace.xz,128,10,6.940526,26,64,40.625,81,1170390,82.962346
+adaptive_bullseye,619.lbm_s-3766B.champsimtrace.xz,128,8,0.105873,0,64,0.0,0,0,0.0

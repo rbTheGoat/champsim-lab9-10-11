@@ -1,0 +1,2 @@
+predictor,trace_count,average_ipc,geomean_ipc,average_accuracy_percent,average_mpki,average_lookup_latency_ns,average_real_seconds,total_real_seconds
+adaptive_bullseye,4,0.89581225,0.8281159756580476,97.64005,5.3846,115.43735,11.9575,47.83
