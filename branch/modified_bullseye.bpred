@@ -1,0 +1,447 @@
+#include "ooo_cpu.h"
+
+#include <cstdint>
+#include <cstring>
+#include <iostream>
+
+// -----------------------------------------------------------------------------
+// Modified Bullseye branch predictor
+//
+// Base predictor: supplied ChampSim-style hashed perceptron.
+// Extension:
+//   1. Track base-predictor mispredictions per branch PC.
+//   2. When a PC reaches a fixed miss threshold, admit it to an H2P table.
+//   3. Give each admitted PC its own small perceptron.
+//   4. Override the base prediction whenever that PC is H2P-resident.
+//
+// This follows the simplified flow specified in the assignment rather than
+// reproducing the full TAGE-SC-L Bullseye design from the research paper.
+// -----------------------------------------------------------------------------
+
+// ----------------------------- Base predictor --------------------------------
+
+#define MB_BASE_TABLE_COUNT 16
+#define MB_BASE_MAX_HISTORY 232
+#define MB_BASE_INDEX_BITS 12
+#define MB_BASE_TABLE_SIZE (1u << MB_BASE_INDEX_BITS)
+#define MB_BASE_HISTORY_WORDS (MB_BASE_MAX_HISTORY / MB_BASE_INDEX_BITS + 1)
+#define MB_BASE_THRESHOLD_SPEED 18
+
+static const int mb_base_history_lengths[MB_BASE_TABLE_COUNT] = {
+    0, 3, 4, 6, 8, 10, 14, 19,
+    26, 36, 49, 67, 91, 125, 170, MB_BASE_MAX_HISTORY
+};
+
+static int mb_base_weights[NUM_CPUS][MB_BASE_TABLE_COUNT][MB_BASE_TABLE_SIZE];
+static uint32_t mb_base_history[NUM_CPUS][MB_BASE_HISTORY_WORDS];
+static uint32_t mb_base_indices[NUM_CPUS][MB_BASE_TABLE_COUNT];
+static int mb_base_output[NUM_CPUS];
+static int mb_base_theta[NUM_CPUS];
+static int mb_base_threshold_counter[NUM_CPUS];
+static uint8_t mb_saved_base_prediction[NUM_CPUS];
+
+// --------------------------- Miss tracker -------------------------------------
+
+#define MB_TRACKER_SETS 256
+#define MB_TRACKER_WAYS 4
+#define MB_FIXED_MISS_THRESHOLD 64
+
+struct MBTrackerEntry {
+    bool valid;
+    uint64_t pc;
+    uint16_t miss_count;
+    uint64_t last_used;
+};
+
+static MBTrackerEntry
+    mb_tracker[NUM_CPUS][MB_TRACKER_SETS][MB_TRACKER_WAYS];
+
+// ----------------------------- H2P layer --------------------------------------
+
+#define MB_H2P_SETS 16
+#define MB_H2P_WAYS 4
+#define MB_MINI_HISTORY_LENGTH 24
+#define MB_MINI_WEIGHT_MAX 127
+#define MB_MINI_WEIGHT_MIN -128
+#define MB_MINI_TRAIN_THRESHOLD \
+    ((int)(1.93 * MB_MINI_HISTORY_LENGTH + 14))
+
+struct MBH2PEntry {
+    bool valid;
+    uint64_t pc;
+    int16_t weights[MB_MINI_HISTORY_LENGTH + 1];
+    uint64_t last_used;
+};
+
+static MBH2PEntry mb_h2p[NUM_CPUS][MB_H2P_SETS][MB_H2P_WAYS];
+
+static uint64_t mb_mini_global_history[NUM_CPUS];
+static uint64_t mb_saved_mini_history[NUM_CPUS];
+static int mb_saved_mini_output[NUM_CPUS];
+static bool mb_saved_used_h2p[NUM_CPUS];
+
+static uint64_t mb_use_clock[NUM_CPUS];
+
+// Optional counters retained for debugging and report interpretation.
+static uint64_t mb_h2p_admissions[NUM_CPUS];
+static uint64_t mb_h2p_overrides[NUM_CPUS];
+static uint64_t mb_h2p_correct_overrides[NUM_CPUS];
+
+// ----------------------------- Helpers ----------------------------------------
+
+static inline uint32_t mb_hash_pc(uint64_t pc)
+{
+    pc ^= pc >> 33;
+    pc *= 0xff51afd7ed558ccdULL;
+    pc ^= pc >> 33;
+    pc *= 0xc4ceb9fe1a85ec53ULL;
+    pc ^= pc >> 33;
+    return static_cast<uint32_t>(pc);
+}
+
+static MBH2PEntry* mb_find_h2p(uint32_t cpu, uint64_t pc)
+{
+    const uint32_t set = mb_hash_pc(pc) % MB_H2P_SETS;
+
+    for (uint32_t way = 0; way < MB_H2P_WAYS; ++way) {
+        MBH2PEntry& entry = mb_h2p[cpu][set][way];
+
+        if (entry.valid && entry.pc == pc)
+            return &entry;
+    }
+
+    return nullptr;
+}
+
+static MBH2PEntry* mb_admit_h2p(uint32_t cpu, uint64_t pc)
+{
+    MBH2PEntry* existing = mb_find_h2p(cpu, pc);
+    if (existing != nullptr)
+        return existing;
+
+    const uint32_t set = mb_hash_pc(pc) % MB_H2P_SETS;
+    uint32_t victim = 0;
+
+    for (uint32_t way = 0; way < MB_H2P_WAYS; ++way) {
+        if (!mb_h2p[cpu][set][way].valid) {
+            victim = way;
+            break;
+        }
+
+        if (mb_h2p[cpu][set][way].last_used
+            < mb_h2p[cpu][set][victim].last_used) {
+            victim = way;
+        }
+    }
+
+    MBH2PEntry& entry = mb_h2p[cpu][set][victim];
+    std::memset(&entry, 0, sizeof(entry));
+
+    entry.valid = true;
+    entry.pc = pc;
+    entry.last_used = ++mb_use_clock[cpu];
+
+    mb_h2p_admissions[cpu]++;
+    return &entry;
+}
+
+static MBTrackerEntry* mb_get_tracker(uint32_t cpu, uint64_t pc)
+{
+    const uint32_t set = mb_hash_pc(pc) % MB_TRACKER_SETS;
+    uint32_t victim = 0;
+
+    for (uint32_t way = 0; way < MB_TRACKER_WAYS; ++way) {
+        MBTrackerEntry& entry = mb_tracker[cpu][set][way];
+
+        if (entry.valid && entry.pc == pc) {
+            entry.last_used = ++mb_use_clock[cpu];
+            return &entry;
+        }
+
+        if (!entry.valid) {
+            victim = way;
+            MBTrackerEntry& free_entry = mb_tracker[cpu][set][victim];
+            std::memset(&free_entry, 0, sizeof(free_entry));
+
+            free_entry.valid = true;
+            free_entry.pc = pc;
+            free_entry.last_used = ++mb_use_clock[cpu];
+            return &free_entry;
+        }
+
+        if (mb_tracker[cpu][set][way].last_used
+            < mb_tracker[cpu][set][victim].last_used) {
+            victim = way;
+        }
+    }
+
+    MBTrackerEntry& entry = mb_tracker[cpu][set][victim];
+    std::memset(&entry, 0, sizeof(entry));
+
+    entry.valid = true;
+    entry.pc = pc;
+    entry.last_used = ++mb_use_clock[cpu];
+    return &entry;
+}
+
+static uint8_t mb_base_predict(uint32_t cpu, uint64_t pc)
+{
+    mb_base_output[cpu] = 0;
+
+    for (int table = 0; table < MB_BASE_TABLE_COUNT; ++table) {
+        const int history_length = mb_base_history_lengths[table];
+        const int full_words = history_length / MB_BASE_INDEX_BITS;
+        const int final_bits = history_length % MB_BASE_INDEX_BITS;
+
+        uint32_t index = 0;
+
+        for (int word = 0; word < full_words; ++word)
+            index ^= mb_base_history[cpu][word];
+
+        if (final_bits != 0) {
+            index ^= mb_base_history[cpu][full_words]
+                     & ((1u << final_bits) - 1u);
+        }
+
+        index ^= static_cast<uint32_t>(pc);
+        index &= MB_BASE_TABLE_SIZE - 1u;
+
+        mb_base_indices[cpu][table] = index;
+        mb_base_output[cpu] += mb_base_weights[cpu][table][index];
+    }
+
+    return mb_base_output[cpu] >= 1;
+}
+
+static void mb_update_base(uint32_t cpu, uint8_t taken)
+{
+    const bool prediction = mb_base_output[cpu] >= 1;
+    const bool correct = prediction == static_cast<bool>(taken);
+
+    bool carry = taken != 0;
+
+    for (int word = 0; word < MB_BASE_HISTORY_WORDS; ++word) {
+        mb_base_history[cpu][word] <<= 1;
+        mb_base_history[cpu][word] |= carry;
+
+        carry = (mb_base_history[cpu][word] & MB_BASE_TABLE_SIZE) != 0;
+        mb_base_history[cpu][word] &= MB_BASE_TABLE_SIZE - 1u;
+    }
+
+    const int magnitude =
+        mb_base_output[cpu] < 0
+            ? -mb_base_output[cpu]
+            : mb_base_output[cpu];
+
+    if (!correct || magnitude < mb_base_theta[cpu]) {
+        for (int table = 0; table < MB_BASE_TABLE_COUNT; ++table) {
+            int& weight =
+                mb_base_weights[cpu][table][mb_base_indices[cpu][table]];
+
+            if (taken) {
+                if (weight < 127)
+                    weight++;
+            } else {
+                if (weight > -128)
+                    weight--;
+            }
+        }
+
+        if (!correct) {
+            mb_base_threshold_counter[cpu]++;
+
+            if (mb_base_threshold_counter[cpu]
+                >= MB_BASE_THRESHOLD_SPEED) {
+                mb_base_theta[cpu]++;
+                mb_base_threshold_counter[cpu] = 0;
+            }
+        } else if (magnitude < mb_base_theta[cpu]) {
+            mb_base_threshold_counter[cpu]--;
+
+            if (mb_base_threshold_counter[cpu]
+                <= -MB_BASE_THRESHOLD_SPEED) {
+                if (mb_base_theta[cpu] > 1)
+                    mb_base_theta[cpu]--;
+
+                mb_base_threshold_counter[cpu] = 0;
+            }
+        }
+    }
+}
+
+static int mb_mini_output(
+    const MBH2PEntry& entry,
+    uint64_t history
+)
+{
+    int output = entry.weights[0];
+
+    for (int bit = 0; bit < MB_MINI_HISTORY_LENGTH; ++bit) {
+        const bool history_taken = ((history >> bit) & 1ULL) != 0;
+        const int weight = entry.weights[bit + 1];
+
+        output += history_taken ? weight : -weight;
+    }
+
+    return output;
+}
+
+static void mb_update_mini(
+    MBH2PEntry& entry,
+    uint64_t history,
+    int output,
+    uint8_t taken
+)
+{
+    const bool prediction = output >= 0;
+    const bool correct = prediction == static_cast<bool>(taken);
+    const int magnitude = output < 0 ? -output : output;
+
+    if (correct && magnitude > MB_MINI_TRAIN_THRESHOLD)
+        return;
+
+    int bias = entry.weights[0];
+    bias += taken ? 1 : -1;
+
+    if (bias > MB_MINI_WEIGHT_MAX)
+        bias = MB_MINI_WEIGHT_MAX;
+    if (bias < MB_MINI_WEIGHT_MIN)
+        bias = MB_MINI_WEIGHT_MIN;
+
+    entry.weights[0] = static_cast<int16_t>(bias);
+
+    for (int bit = 0; bit < MB_MINI_HISTORY_LENGTH; ++bit) {
+        const bool history_taken = ((history >> bit) & 1ULL) != 0;
+        const bool correlated = history_taken == static_cast<bool>(taken);
+
+        int weight = entry.weights[bit + 1];
+        weight += correlated ? 1 : -1;
+
+        if (weight > MB_MINI_WEIGHT_MAX)
+            weight = MB_MINI_WEIGHT_MAX;
+        if (weight < MB_MINI_WEIGHT_MIN)
+            weight = MB_MINI_WEIGHT_MIN;
+
+        entry.weights[bit + 1] = static_cast<int16_t>(weight);
+    }
+}
+
+// ------------------------- ChampSim interface ---------------------------------
+
+void O3_CPU::initialize_branch_predictor()
+{
+    std::memset(
+        mb_base_weights[cpu],
+        0,
+        sizeof(mb_base_weights[cpu])
+    );
+    std::memset(
+        mb_base_history[cpu],
+        0,
+        sizeof(mb_base_history[cpu])
+    );
+    std::memset(
+        mb_base_indices[cpu],
+        0,
+        sizeof(mb_base_indices[cpu])
+    );
+    std::memset(
+        mb_tracker[cpu],
+        0,
+        sizeof(mb_tracker[cpu])
+    );
+    std::memset(
+        mb_h2p[cpu],
+        0,
+        sizeof(mb_h2p[cpu])
+    );
+
+    mb_base_output[cpu] = 0;
+    mb_base_theta[cpu] = 10;
+    mb_base_threshold_counter[cpu] = 0;
+    mb_saved_base_prediction[cpu] = 0;
+
+    mb_mini_global_history[cpu] = 0;
+    mb_saved_mini_history[cpu] = 0;
+    mb_saved_mini_output[cpu] = 0;
+    mb_saved_used_h2p[cpu] = false;
+
+    mb_use_clock[cpu] = 0;
+    mb_h2p_admissions[cpu] = 0;
+    mb_h2p_overrides[cpu] = 0;
+    mb_h2p_correct_overrides[cpu] = 0;
+
+    std::cout
+        << "CPU " << cpu
+        << " Modified Bullseye predictor"
+        << " (hashed-perceptron base, fixed miss threshold "
+        << MB_FIXED_MISS_THRESHOLD << ")"
+        << std::endl;
+}
+
+uint8_t O3_CPU::predict_branch(uint64_t ip)
+{
+    const uint8_t base_prediction = mb_base_predict(cpu, ip);
+    mb_saved_base_prediction[cpu] = base_prediction;
+
+    MBH2PEntry* h2p_entry = mb_find_h2p(cpu, ip);
+
+    if (h2p_entry == nullptr) {
+        mb_saved_used_h2p[cpu] = false;
+        return base_prediction;
+    }
+
+    h2p_entry->last_used = ++mb_use_clock[cpu];
+
+    mb_saved_used_h2p[cpu] = true;
+    mb_saved_mini_history[cpu] = mb_mini_global_history[cpu];
+    mb_saved_mini_output[cpu] = mb_mini_output(
+        *h2p_entry,
+        mb_saved_mini_history[cpu]
+    );
+
+    mb_h2p_overrides[cpu]++;
+    return mb_saved_mini_output[cpu] >= 0;
+}
+
+void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
+{
+    MBH2PEntry* active_h2p_entry =
+        mb_saved_used_h2p[cpu]
+            ? mb_find_h2p(cpu, ip)
+            : nullptr;
+
+    if (active_h2p_entry != nullptr) {
+        const bool mini_prediction =
+            mb_saved_mini_output[cpu] >= 0;
+
+        if (mini_prediction == static_cast<bool>(taken))
+            mb_h2p_correct_overrides[cpu]++;
+
+        mb_update_mini(
+            *active_h2p_entry,
+            mb_saved_mini_history[cpu],
+            mb_saved_mini_output[cpu],
+            taken
+        );
+    }
+
+    const bool base_was_wrong =
+        mb_saved_base_prediction[cpu] != taken;
+
+    if (base_was_wrong) {
+        MBTrackerEntry* tracker = mb_get_tracker(cpu, ip);
+
+        if (tracker->miss_count < UINT16_MAX)
+            tracker->miss_count++;
+
+        if (tracker->miss_count >= MB_FIXED_MISS_THRESHOLD)
+            mb_admit_h2p(cpu, ip);
+    }
+
+    mb_update_base(cpu, taken);
+
+    mb_mini_global_history[cpu] =
+        ((mb_mini_global_history[cpu] << 1) | (taken ? 1ULL : 0ULL))
+        & ((1ULL << MB_MINI_HISTORY_LENGTH) - 1ULL);
+}
