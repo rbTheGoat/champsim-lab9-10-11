@@ -1,0 +1,2 @@
+predictor,mix_number,core_count,average_ipc,geomean_ipc,sum_ipc,average_accuracy_percent,average_mpki,average_lookup_latency_ns,total_lookup_samples,run_real_seconds,run_user_seconds,run_sys_seconds
+modified_bullseye,1,4,0.83000375,0.6212516287940217,3.320015,98.422,1.884248675,161.648875,33779028,385.3,345.39,39.78
