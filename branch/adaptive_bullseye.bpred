@@ -1,0 +1,689 @@
+#include "ooo_cpu.h"
+
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+
+// -----------------------------------------------------------------------------
+// Adaptive-Threshold Modified Bullseye branch predictor
+//
+// Base predictor:
+//   Supplied ChampSim-style hashed perceptron.
+//
+// H2P extension:
+//   Tracks base-predictor misses per branch PC. Branches whose miss count
+//   reaches the current admission threshold enter a small H2P table and receive
+//   a dedicated mini perceptron that overrides the base prediction.
+//
+// Adaptive improvement:
+//   The admission threshold changes online, independently for every core.
+//   It is lowered when the recent base-predictor miss rate is high and the H2P
+//   layer is useful, and raised when the base miss rate is low, the H2P layer is
+//   inaccurate, or the H2P table is under high pressure.
+// -----------------------------------------------------------------------------
+
+// ----------------------------- Base predictor --------------------------------
+
+#define AB_BASE_TABLE_COUNT 16
+#define AB_BASE_MAX_HISTORY 232
+#define AB_BASE_INDEX_BITS 12
+#define AB_BASE_TABLE_SIZE (1u << AB_BASE_INDEX_BITS)
+#define AB_BASE_HISTORY_WORDS (AB_BASE_MAX_HISTORY / AB_BASE_INDEX_BITS + 1)
+#define AB_BASE_THRESHOLD_SPEED 18
+
+static const int ab_base_history_lengths[AB_BASE_TABLE_COUNT] = {
+    0, 3, 4, 6, 8, 10, 14, 19,
+    26, 36, 49, 67, 91, 125, 170, AB_BASE_MAX_HISTORY
+};
+
+static int
+    ab_base_weights[NUM_CPUS][AB_BASE_TABLE_COUNT][AB_BASE_TABLE_SIZE];
+
+static uint32_t
+    ab_base_history[NUM_CPUS][AB_BASE_HISTORY_WORDS];
+
+static uint32_t
+    ab_base_indices[NUM_CPUS][AB_BASE_TABLE_COUNT];
+
+static int ab_base_output[NUM_CPUS];
+static int ab_base_theta[NUM_CPUS];
+static int ab_base_threshold_counter[NUM_CPUS];
+static uint8_t ab_saved_base_prediction[NUM_CPUS];
+
+// --------------------------- Miss tracker -------------------------------------
+
+#define AB_TRACKER_SETS 256
+#define AB_TRACKER_WAYS 4
+
+struct ABTrackerEntry {
+    bool valid;
+    uint64_t pc;
+    uint16_t miss_count;
+    uint64_t last_used;
+};
+
+static ABTrackerEntry
+    ab_tracker[NUM_CPUS][AB_TRACKER_SETS][AB_TRACKER_WAYS];
+
+// ----------------------------- H2P layer --------------------------------------
+
+#define AB_H2P_SETS 16
+#define AB_H2P_WAYS 4
+#define AB_H2P_CAPACITY (AB_H2P_SETS * AB_H2P_WAYS)
+
+#define AB_MINI_HISTORY_LENGTH 24
+#define AB_MINI_WEIGHT_MAX 127
+#define AB_MINI_WEIGHT_MIN -128
+#define AB_MINI_TRAIN_THRESHOLD \
+    ((int)(1.93 * AB_MINI_HISTORY_LENGTH + 14))
+
+struct ABH2PEntry {
+    bool valid;
+    uint64_t pc;
+    int16_t weights[AB_MINI_HISTORY_LENGTH + 1];
+    uint64_t last_used;
+};
+
+static ABH2PEntry
+    ab_h2p[NUM_CPUS][AB_H2P_SETS][AB_H2P_WAYS];
+
+static uint64_t ab_mini_global_history[NUM_CPUS];
+static uint64_t ab_saved_mini_history[NUM_CPUS];
+static int ab_saved_mini_output[NUM_CPUS];
+static bool ab_saved_used_h2p[NUM_CPUS];
+
+static uint64_t ab_use_clock[NUM_CPUS];
+
+// -------------------------- Adaptive threshold --------------------------------
+
+#define AB_INITIAL_ADMISSION_THRESHOLD 64
+#define AB_MIN_ADMISSION_THRESHOLD 16
+#define AB_MAX_ADMISSION_THRESHOLD 128
+#define AB_THRESHOLD_STEP 8
+#define AB_ADAPTATION_EPOCH 8192
+
+#define AB_HIGH_BASE_MISS_RATE 0.10
+#define AB_LOW_BASE_MISS_RATE 0.04
+#define AB_MIN_OVERRIDE_SAMPLES 128
+#define AB_POOR_OVERRIDE_ACCURACY 0.55
+#define AB_GOOD_OVERRIDE_ACCURACY 0.75
+#define AB_HIGH_H2P_OCCUPANCY 0.875
+
+static uint16_t ab_admission_threshold[NUM_CPUS];
+
+static uint64_t ab_epoch_branches[NUM_CPUS];
+static uint64_t ab_epoch_base_misses[NUM_CPUS];
+static uint64_t ab_epoch_h2p_overrides[NUM_CPUS];
+static uint64_t ab_epoch_h2p_correct[NUM_CPUS];
+
+static uint64_t ab_total_base_branches[NUM_CPUS];
+static uint64_t ab_total_base_misses[NUM_CPUS];
+static uint64_t ab_h2p_admissions[NUM_CPUS];
+static uint64_t ab_h2p_overrides[NUM_CPUS];
+static uint64_t ab_h2p_correct_overrides[NUM_CPUS];
+static uint64_t ab_threshold_adjustments[NUM_CPUS];
+
+static bool ab_exit_report_registered = false;
+
+// ----------------------------- Helpers ----------------------------------------
+
+static inline uint32_t ab_hash_pc(uint64_t pc)
+{
+    pc ^= pc >> 33;
+    pc *= 0xff51afd7ed558ccdULL;
+    pc ^= pc >> 33;
+    pc *= 0xc4ceb9fe1a85ec53ULL;
+    pc ^= pc >> 33;
+
+    return static_cast<uint32_t>(pc);
+}
+
+static uint32_t ab_h2p_occupancy(uint32_t cpu)
+{
+    uint32_t occupancy = 0;
+
+    for (uint32_t set = 0; set < AB_H2P_SETS; ++set) {
+        for (uint32_t way = 0; way < AB_H2P_WAYS; ++way) {
+            if (ab_h2p[cpu][set][way].valid)
+                occupancy++;
+        }
+    }
+
+    return occupancy;
+}
+
+static ABH2PEntry* ab_find_h2p(uint32_t cpu, uint64_t pc)
+{
+    const uint32_t set = ab_hash_pc(pc) % AB_H2P_SETS;
+
+    for (uint32_t way = 0; way < AB_H2P_WAYS; ++way) {
+        ABH2PEntry& entry = ab_h2p[cpu][set][way];
+
+        if (entry.valid && entry.pc == pc)
+            return &entry;
+    }
+
+    return nullptr;
+}
+
+static ABH2PEntry* ab_admit_h2p(uint32_t cpu, uint64_t pc)
+{
+    ABH2PEntry* existing = ab_find_h2p(cpu, pc);
+
+    if (existing != nullptr)
+        return existing;
+
+    const uint32_t set = ab_hash_pc(pc) % AB_H2P_SETS;
+    uint32_t victim = 0;
+    bool found_invalid = false;
+
+    for (uint32_t way = 0; way < AB_H2P_WAYS; ++way) {
+        if (!ab_h2p[cpu][set][way].valid) {
+            victim = way;
+            found_invalid = true;
+            break;
+        }
+
+        if (ab_h2p[cpu][set][way].last_used
+            < ab_h2p[cpu][set][victim].last_used) {
+            victim = way;
+        }
+    }
+
+    (void)found_invalid;
+
+    ABH2PEntry& entry = ab_h2p[cpu][set][victim];
+    std::memset(&entry, 0, sizeof(entry));
+
+    entry.valid = true;
+    entry.pc = pc;
+    entry.last_used = ++ab_use_clock[cpu];
+
+    ab_h2p_admissions[cpu]++;
+    return &entry;
+}
+
+static ABTrackerEntry* ab_get_tracker(uint32_t cpu, uint64_t pc)
+{
+    const uint32_t set = ab_hash_pc(pc) % AB_TRACKER_SETS;
+
+    for (uint32_t way = 0; way < AB_TRACKER_WAYS; ++way) {
+        ABTrackerEntry& entry = ab_tracker[cpu][set][way];
+
+        if (entry.valid && entry.pc == pc) {
+            entry.last_used = ++ab_use_clock[cpu];
+            return &entry;
+        }
+    }
+
+    uint32_t victim = 0;
+
+    for (uint32_t way = 0; way < AB_TRACKER_WAYS; ++way) {
+        if (!ab_tracker[cpu][set][way].valid) {
+            victim = way;
+            break;
+        }
+
+        if (ab_tracker[cpu][set][way].last_used
+            < ab_tracker[cpu][set][victim].last_used) {
+            victim = way;
+        }
+    }
+
+    ABTrackerEntry& entry = ab_tracker[cpu][set][victim];
+    std::memset(&entry, 0, sizeof(entry));
+
+    entry.valid = true;
+    entry.pc = pc;
+    entry.last_used = ++ab_use_clock[cpu];
+
+    return &entry;
+}
+
+static uint8_t ab_base_predict(uint32_t cpu, uint64_t pc)
+{
+    ab_base_output[cpu] = 0;
+
+    for (int table = 0; table < AB_BASE_TABLE_COUNT; ++table) {
+        const int history_length = ab_base_history_lengths[table];
+        const int full_words = history_length / AB_BASE_INDEX_BITS;
+        const int final_bits = history_length % AB_BASE_INDEX_BITS;
+
+        uint32_t index = 0;
+
+        for (int word = 0; word < full_words; ++word)
+            index ^= ab_base_history[cpu][word];
+
+        if (final_bits != 0) {
+            index ^= ab_base_history[cpu][full_words]
+                     & ((1u << final_bits) - 1u);
+        }
+
+        index ^= static_cast<uint32_t>(pc);
+        index &= AB_BASE_TABLE_SIZE - 1u;
+
+        ab_base_indices[cpu][table] = index;
+        ab_base_output[cpu] += ab_base_weights[cpu][table][index];
+    }
+
+    return ab_base_output[cpu] >= 1;
+}
+
+static void ab_update_base(uint32_t cpu, uint8_t taken)
+{
+    const bool prediction = ab_base_output[cpu] >= 1;
+    const bool correct = prediction == static_cast<bool>(taken);
+
+    bool carry = taken != 0;
+
+    for (int word = 0; word < AB_BASE_HISTORY_WORDS; ++word) {
+        ab_base_history[cpu][word] <<= 1;
+        ab_base_history[cpu][word] |= carry;
+
+        carry = (ab_base_history[cpu][word] & AB_BASE_TABLE_SIZE) != 0;
+        ab_base_history[cpu][word] &= AB_BASE_TABLE_SIZE - 1u;
+    }
+
+    const int magnitude =
+        ab_base_output[cpu] < 0
+            ? -ab_base_output[cpu]
+            : ab_base_output[cpu];
+
+    if (!correct || magnitude < ab_base_theta[cpu]) {
+        for (int table = 0; table < AB_BASE_TABLE_COUNT; ++table) {
+            int& weight =
+                ab_base_weights[cpu][table][ab_base_indices[cpu][table]];
+
+            if (taken) {
+                if (weight < 127)
+                    weight++;
+            } else {
+                if (weight > -128)
+                    weight--;
+            }
+        }
+
+        if (!correct) {
+            ab_base_threshold_counter[cpu]++;
+
+            if (ab_base_threshold_counter[cpu]
+                >= AB_BASE_THRESHOLD_SPEED) {
+                ab_base_theta[cpu]++;
+                ab_base_threshold_counter[cpu] = 0;
+            }
+        } else if (magnitude < ab_base_theta[cpu]) {
+            ab_base_threshold_counter[cpu]--;
+
+            if (ab_base_threshold_counter[cpu]
+                <= -AB_BASE_THRESHOLD_SPEED) {
+                if (ab_base_theta[cpu] > 1)
+                    ab_base_theta[cpu]--;
+
+                ab_base_threshold_counter[cpu] = 0;
+            }
+        }
+    }
+}
+
+static int ab_mini_output(
+    const ABH2PEntry& entry,
+    uint64_t history
+)
+{
+    int output = entry.weights[0];
+
+    for (int bit = 0; bit < AB_MINI_HISTORY_LENGTH; ++bit) {
+        const bool history_taken = ((history >> bit) & 1ULL) != 0;
+        const int weight = entry.weights[bit + 1];
+
+        output += history_taken ? weight : -weight;
+    }
+
+    return output;
+}
+
+static void ab_update_mini(
+    ABH2PEntry& entry,
+    uint64_t history,
+    int output,
+    uint8_t taken
+)
+{
+    const bool prediction = output >= 0;
+    const bool correct = prediction == static_cast<bool>(taken);
+    const int magnitude = output < 0 ? -output : output;
+
+    if (correct && magnitude > AB_MINI_TRAIN_THRESHOLD)
+        return;
+
+    int bias = entry.weights[0];
+    bias += taken ? 1 : -1;
+
+    if (bias > AB_MINI_WEIGHT_MAX)
+        bias = AB_MINI_WEIGHT_MAX;
+    if (bias < AB_MINI_WEIGHT_MIN)
+        bias = AB_MINI_WEIGHT_MIN;
+
+    entry.weights[0] = static_cast<int16_t>(bias);
+
+    for (int bit = 0; bit < AB_MINI_HISTORY_LENGTH; ++bit) {
+        const bool history_taken = ((history >> bit) & 1ULL) != 0;
+        const bool correlated = history_taken == static_cast<bool>(taken);
+
+        int weight = entry.weights[bit + 1];
+        weight += correlated ? 1 : -1;
+
+        if (weight > AB_MINI_WEIGHT_MAX)
+            weight = AB_MINI_WEIGHT_MAX;
+        if (weight < AB_MINI_WEIGHT_MIN)
+            weight = AB_MINI_WEIGHT_MIN;
+
+        entry.weights[bit + 1] = static_cast<int16_t>(weight);
+    }
+}
+
+static void ab_adapt_threshold(uint32_t cpu)
+{
+    if (ab_epoch_branches[cpu] < AB_ADAPTATION_EPOCH)
+        return;
+
+    const double base_miss_rate =
+        static_cast<double>(ab_epoch_base_misses[cpu])
+        / static_cast<double>(ab_epoch_branches[cpu]);
+
+    const bool enough_override_samples =
+        ab_epoch_h2p_overrides[cpu] >= AB_MIN_OVERRIDE_SAMPLES;
+
+    double override_accuracy = 0.0;
+
+    if (ab_epoch_h2p_overrides[cpu] != 0) {
+        override_accuracy =
+            static_cast<double>(ab_epoch_h2p_correct[cpu])
+            / static_cast<double>(ab_epoch_h2p_overrides[cpu]);
+    }
+
+    const double occupancy_ratio =
+        static_cast<double>(ab_h2p_occupancy(cpu))
+        / static_cast<double>(AB_H2P_CAPACITY);
+
+    int new_threshold = ab_admission_threshold[cpu];
+
+    // Poor H2P usefulness or high table pressure makes admission stricter.
+    if (
+        (enough_override_samples
+         && override_accuracy < AB_POOR_OVERRIDE_ACCURACY)
+        || (
+            occupancy_ratio >= AB_HIGH_H2P_OCCUPANCY
+            && base_miss_rate < AB_HIGH_BASE_MISS_RATE
+        )
+    ) {
+        new_threshold += AB_THRESHOLD_STEP;
+    }
+    // A difficult branch stream and a useful H2P layer justify more admission.
+    else if (
+        base_miss_rate > AB_HIGH_BASE_MISS_RATE
+        && (
+            !enough_override_samples
+            || override_accuracy >= AB_GOOD_OVERRIDE_ACCURACY
+        )
+    ) {
+        new_threshold -= AB_THRESHOLD_STEP;
+    }
+    // When the base predictor is already accurate, conserve H2P capacity.
+    else if (base_miss_rate < AB_LOW_BASE_MISS_RATE) {
+        new_threshold += AB_THRESHOLD_STEP;
+    }
+
+    if (new_threshold < AB_MIN_ADMISSION_THRESHOLD)
+        new_threshold = AB_MIN_ADMISSION_THRESHOLD;
+
+    if (new_threshold > AB_MAX_ADMISSION_THRESHOLD)
+        new_threshold = AB_MAX_ADMISSION_THRESHOLD;
+
+    if (new_threshold != ab_admission_threshold[cpu]) {
+        ab_admission_threshold[cpu] =
+            static_cast<uint16_t>(new_threshold);
+
+        ab_threshold_adjustments[cpu]++;
+    }
+
+    ab_epoch_branches[cpu] = 0;
+    ab_epoch_base_misses[cpu] = 0;
+    ab_epoch_h2p_overrides[cpu] = 0;
+    ab_epoch_h2p_correct[cpu] = 0;
+}
+
+static void ab_print_final_stats()
+{
+    std::printf("\nAdaptive Bullseye Internal Statistics\n");
+
+    for (uint32_t cpu = 0; cpu < NUM_CPUS; ++cpu) {
+        const double base_miss_rate =
+            ab_total_base_branches[cpu] == 0
+                ? 0.0
+                : (
+                    100.0
+                    * static_cast<double>(ab_total_base_misses[cpu])
+                    / static_cast<double>(ab_total_base_branches[cpu])
+                );
+
+        const double override_accuracy =
+            ab_h2p_overrides[cpu] == 0
+                ? 0.0
+                : (
+                    100.0
+                    * static_cast<double>(
+                        ab_h2p_correct_overrides[cpu]
+                    )
+                    / static_cast<double>(ab_h2p_overrides[cpu])
+                );
+
+        std::printf(
+            "CPU %u Adaptive Bullseye Final Admission Threshold: %u\n",
+            cpu,
+            static_cast<unsigned>(ab_admission_threshold[cpu])
+        );
+
+        std::printf(
+            "CPU %u Adaptive Bullseye Threshold Adjustments: %llu\n",
+            cpu,
+            static_cast<unsigned long long>(
+                ab_threshold_adjustments[cpu]
+            )
+        );
+
+        std::printf(
+            "CPU %u Adaptive Bullseye Base Miss Rate: %.6f%%\n",
+            cpu,
+            base_miss_rate
+        );
+
+        std::printf(
+            "CPU %u Adaptive Bullseye H2P Occupancy: %u/%u\n",
+            cpu,
+            ab_h2p_occupancy(cpu),
+            AB_H2P_CAPACITY
+        );
+
+        std::printf(
+            "CPU %u Adaptive Bullseye H2P Admissions: %llu\n",
+            cpu,
+            static_cast<unsigned long long>(ab_h2p_admissions[cpu])
+        );
+
+        std::printf(
+            "CPU %u Adaptive Bullseye H2P Overrides: %llu\n",
+            cpu,
+            static_cast<unsigned long long>(ab_h2p_overrides[cpu])
+        );
+
+        std::printf(
+            "CPU %u Adaptive Bullseye H2P Override Accuracy: %.6f%%\n",
+            cpu,
+            override_accuracy
+        );
+    }
+}
+
+// ------------------------- ChampSim interface ---------------------------------
+
+void O3_CPU::initialize_branch_predictor()
+{
+    std::memset(
+        ab_base_weights[cpu],
+        0,
+        sizeof(ab_base_weights[cpu])
+    );
+    std::memset(
+        ab_base_history[cpu],
+        0,
+        sizeof(ab_base_history[cpu])
+    );
+    std::memset(
+        ab_base_indices[cpu],
+        0,
+        sizeof(ab_base_indices[cpu])
+    );
+    std::memset(
+        ab_tracker[cpu],
+        0,
+        sizeof(ab_tracker[cpu])
+    );
+    std::memset(
+        ab_h2p[cpu],
+        0,
+        sizeof(ab_h2p[cpu])
+    );
+
+    ab_base_output[cpu] = 0;
+    ab_base_theta[cpu] = 10;
+    ab_base_threshold_counter[cpu] = 0;
+    ab_saved_base_prediction[cpu] = 0;
+
+    ab_mini_global_history[cpu] = 0;
+    ab_saved_mini_history[cpu] = 0;
+    ab_saved_mini_output[cpu] = 0;
+    ab_saved_used_h2p[cpu] = false;
+
+    ab_use_clock[cpu] = 0;
+
+    ab_admission_threshold[cpu] =
+        AB_INITIAL_ADMISSION_THRESHOLD;
+
+    ab_epoch_branches[cpu] = 0;
+    ab_epoch_base_misses[cpu] = 0;
+    ab_epoch_h2p_overrides[cpu] = 0;
+    ab_epoch_h2p_correct[cpu] = 0;
+
+    ab_total_base_branches[cpu] = 0;
+    ab_total_base_misses[cpu] = 0;
+    ab_h2p_admissions[cpu] = 0;
+    ab_h2p_overrides[cpu] = 0;
+    ab_h2p_correct_overrides[cpu] = 0;
+    ab_threshold_adjustments[cpu] = 0;
+
+    if (!ab_exit_report_registered) {
+        std::atexit(ab_print_final_stats);
+        ab_exit_report_registered = true;
+    }
+
+    std::cout
+        << "CPU " << cpu
+        << " Adaptive-Threshold Modified Bullseye predictor"
+        << " (initial threshold "
+        << AB_INITIAL_ADMISSION_THRESHOLD
+        << ", range "
+        << AB_MIN_ADMISSION_THRESHOLD
+        << "-"
+        << AB_MAX_ADMISSION_THRESHOLD
+        << ")"
+        << std::endl;
+}
+
+uint8_t O3_CPU::predict_branch(uint64_t ip)
+{
+    const uint8_t base_prediction = ab_base_predict(cpu, ip);
+    ab_saved_base_prediction[cpu] = base_prediction;
+
+    ABH2PEntry* h2p_entry = ab_find_h2p(cpu, ip);
+
+    if (h2p_entry == nullptr) {
+        ab_saved_used_h2p[cpu] = false;
+        return base_prediction;
+    }
+
+    h2p_entry->last_used = ++ab_use_clock[cpu];
+
+    ab_saved_used_h2p[cpu] = true;
+    ab_saved_mini_history[cpu] = ab_mini_global_history[cpu];
+    ab_saved_mini_output[cpu] = ab_mini_output(
+        *h2p_entry,
+        ab_saved_mini_history[cpu]
+    );
+
+    ab_h2p_overrides[cpu]++;
+    ab_epoch_h2p_overrides[cpu]++;
+
+    return ab_saved_mini_output[cpu] >= 0;
+}
+
+void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
+{
+    ABH2PEntry* active_h2p_entry =
+        ab_saved_used_h2p[cpu]
+            ? ab_find_h2p(cpu, ip)
+            : nullptr;
+
+    if (active_h2p_entry != nullptr) {
+        const bool mini_prediction =
+            ab_saved_mini_output[cpu] >= 0;
+
+        if (mini_prediction == static_cast<bool>(taken)) {
+            ab_h2p_correct_overrides[cpu]++;
+            ab_epoch_h2p_correct[cpu]++;
+        }
+
+        ab_update_mini(
+            *active_h2p_entry,
+            ab_saved_mini_history[cpu],
+            ab_saved_mini_output[cpu],
+            taken
+        );
+    }
+
+    const bool base_was_wrong =
+        ab_saved_base_prediction[cpu] != taken;
+
+    ab_total_base_branches[cpu]++;
+    ab_epoch_branches[cpu]++;
+
+    if (base_was_wrong) {
+        ab_total_base_misses[cpu]++;
+        ab_epoch_base_misses[cpu]++;
+
+        ABTrackerEntry* tracker = ab_get_tracker(cpu, ip);
+
+        if (tracker->miss_count < UINT16_MAX)
+            tracker->miss_count++;
+
+        if (
+            tracker->miss_count
+            >= ab_admission_threshold[cpu]
+        ) {
+            ab_admit_h2p(cpu, ip);
+        }
+    }
+
+    ab_update_base(cpu, taken);
+
+    ab_mini_global_history[cpu] =
+        (
+            (ab_mini_global_history[cpu] << 1)
+            | (taken ? 1ULL : 0ULL)
+        )
+        & ((1ULL << AB_MINI_HISTORY_LENGTH) - 1ULL);
+
+    ab_adapt_threshold(cpu);
+}
