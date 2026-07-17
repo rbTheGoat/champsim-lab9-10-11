@@ -1,0 +1,5 @@
+predictor,trace,binary,result_file,timing_file
+modified_bullseye,401.bzip2-277B.champsimtrace.xz,modified_bullseye-no-no-no-no-lru-1core,results/raw/task1/modified_bullseye/single/simulator_output/modified_bullseye__401.bzip2-277B.txt,results/raw/task1/modified_bullseye/single/timing/modified_bullseye__401.bzip2-277B.txt
+modified_bullseye,403.gcc-16B.champsimtrace.xz,modified_bullseye-no-no-no-no-lru-1core,results/raw/task1/modified_bullseye/single/simulator_output/modified_bullseye__403.gcc-16B.txt,results/raw/task1/modified_bullseye/single/timing/modified_bullseye__403.gcc-16B.txt
+modified_bullseye,605.mcf_s-665B.champsimtrace.xz,modified_bullseye-no-no-no-no-lru-1core,results/raw/task1/modified_bullseye/single/simulator_output/modified_bullseye__605.mcf_s-665B.txt,results/raw/task1/modified_bullseye/single/timing/modified_bullseye__605.mcf_s-665B.txt
+modified_bullseye,619.lbm_s-3766B.champsimtrace.xz,modified_bullseye-no-no-no-no-lru-1core,results/raw/task1/modified_bullseye/single/simulator_output/modified_bullseye__619.lbm_s-3766B.txt,results/raw/task1/modified_bullseye/single/timing/modified_bullseye__619.lbm_s-3766B.txt

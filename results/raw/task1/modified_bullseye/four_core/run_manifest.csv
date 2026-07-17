@@ -1,0 +1,2 @@
+predictor,mix_number,core0_trace,core1_trace,core2_trace,core3_trace,binary,result_file,timing_file
+modified_bullseye,1,403.gcc-16B.champsimtrace.xz,456.hmmer-327B.champsimtrace.xz,605.mcf_s-1644B.champsimtrace.xz,621.wrf_s-8100B.champsimtrace.xz,modified_bullseye-no-no-no-no-lru-4core,results/raw/task1/modified_bullseye/four_core/simulator_output/modified_bullseye__mix1.txt,results/raw/task1/modified_bullseye/four_core/timing/modified_bullseye__mix1.txt
