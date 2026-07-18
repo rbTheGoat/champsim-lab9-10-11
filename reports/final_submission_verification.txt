@@ -1,6 +1,6 @@
 ============================================================
 FINAL SUBMISSION VERIFICATION
-Generated: 2026-07-18T16:58:10+00:00
+Generated: 2026-07-18T16:58:30+00:00
 Repository: /home/raghav/CA_Lab9_10_11/ChampSim-master
 ============================================================
 
@@ -78,11 +78,7 @@ SECTION 11 — Graph counts
 SECTION 12 — Git status
 [PASS] Git branch: main
 [WARN] Working tree has uncommitted changes:
-?? reports/final_assignment_report.md
-?? reports/final_graph_inventory.txt
-?? reports/final_submission_verification.txt
-?? scripts/generate_final_assignment_report.py
-?? scripts/verify_final_submission.sh
+ M reports/final_submission_verification.txt
 [PASS] Origin: https://github.com/rbTheGoat/champsim-lab9-10-11.git
 
 ============================================================

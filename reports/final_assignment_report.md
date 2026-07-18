@@ -1,6 +1,6 @@
 # Computer Architecture Assignment — Labs 9, 10 and 11
 
-**Student name:** Raghav Bisht 
+**Student name:** Raghav Bisht
 **Student ID:** 2023A7PS0484P
 **Course:** Computer Architecture CS-F342
 **Simulator:** ChampSim
@@ -389,9 +389,9 @@ The replacement-policy study demonstrates that no policy is automatically optima
 
 ## 5\. Graph locations
 
-* LLC size: `results/graphs/task2/llc\_size/`
-* Associativity: `results/graphs/task2/llc\_associativity/`
-* Replacement policy × size: `results/graphs/task2/replacement\_policy\_size/`
+* LLC size: `results/graphs/task2/llc\\\_size/`
+* Associativity: `results/graphs/task2/llc\\\_associativity/`
+* Replacement policy × size: `results/graphs/task2/replacement\\\_policy\\\_size/`
 
 ## 6\. Methodology note
 
@@ -404,13 +404,13 @@ The assignment states that the 64-byte block size has an exception for Task 2(d)
 Both policies implement the exact replacement interface used by this ChampSim
 version:
 
-* `CACHE::llc\_initialize\_replacement()`
-* `CACHE::llc\_find\_victim(...)`
-* `CACHE::llc\_update\_replacement\_state(...)`
-* `CACHE::llc\_replacement\_final\_stats()`
+* `CACHE::llc\\\_initialize\\\_replacement()`
+* `CACHE::llc\\\_find\\\_victim(...)`
+* `CACHE::llc\\\_update\\\_replacement\\\_state(...)`
+* `CACHE::llc\\\_replacement\\\_final\\\_stats()`
 
-The build script copies the selected `.llc\_repl` file to
-`replacement/llc\_replacement.cc` before compilation.
+The build script copies the selected `.llc\\\_repl` file to
+`replacement/llc\\\_replacement.cc` before compilation.
 
 ## MRU
 
@@ -444,7 +444,7 @@ Random uses one deterministic xorshift64\* pseudo-random generator per core.
 ### Victim selection
 
 1. Select an invalid way when one exists.
-2. Otherwise choose a way uniformly using `random\_value % LLC\_WAY`.
+2. Otherwise choose a way uniformly using `random\\\_value % LLC\\\_WAY`.
 
 ### Reproducibility
 
@@ -613,8 +613,8 @@ HCIT is evaluated as the seventh replacement policy at 1 MB, 2 MB, 4 MB and 8 MB
 
 ## Graph locations
 
-* `results/graphs/task2/hcit\_comparison/single/`
-* `results/graphs/task2/hcit\_comparison/four\_core/`
+* `results/graphs/task2/hcit\\\_comparison/single/`
+* `results/graphs/task2/hcit\\\_comparison/four\\\_core/`
 
 ## Task 2 graph results
 
@@ -715,19 +715,19 @@ HCIT selectively allocates detailed tracking to candidates showing persistent mi
 * Parsed tables are stored in `results/csv/`.
 * Graphs are stored in `results/graphs/`.
 * Configuration records are stored in `configs/`.
-* Random-trace generator evidence is stored in `random\_trace\_output/`.
+* Random-trace generator evidence is stored in `random\\\_trace\\\_output/`.
 * Supporting design documents and the submission checklist are stored in `reports/`.
 
 # Appendix — Important result files
 
-* `results/csv/task1\_single\_summary\_all\_predictors.csv`
-* `results/csv/task1\_four\_core\_summary\_all\_predictors.csv`
-* `results/csv/task2\_llc\_size\_single\_summary.csv`
-* `results/csv/task2\_llc\_size\_four\_core\_summary.csv`
-* `results/csv/task2\_llc\_associativity\_single\_summary.csv`
-* `results/csv/task2\_llc\_associativity\_four\_core\_summary.csv`
-* `results/csv/task2\_replacement\_policy\_size\_single\_summary\_with\_hcit.csv`
-* `results/csv/task2\_replacement\_policy\_size\_four\_core\_summary\_with\_hcit.csv`
-* `results/csv/task2\_hcit\_internal\_single.csv`
-* `results/csv/task2\_hcit\_internal\_four\_core.csv`
+* `results/csv/task1\\\_single\\\_summary\\\_all\\\_predictors.csv`
+* `results/csv/task1\\\_four\\\_core\\\_summary\\\_all\\\_predictors.csv`
+* `results/csv/task2\\\_llc\\\_size\\\_single\\\_summary.csv`
+* `results/csv/task2\\\_llc\\\_size\\\_four\\\_core\\\_summary.csv`
+* `results/csv/task2\\\_llc\\\_associativity\\\_single\\\_summary.csv`
+* `results/csv/task2\\\_llc\\\_associativity\\\_four\\\_core\\\_summary.csv`
+* `results/csv/task2\\\_replacement\\\_policy\\\_size\\\_single\\\_summary\\\_with\\\_hcit.csv`
+* `results/csv/task2\\\_replacement\\\_policy\\\_size\\\_four\\\_core\\\_summary\\\_with\\\_hcit.csv`
+* `results/csv/task2\\\_hcit\\\_internal\\\_single.csv`
+* `results/csv/task2\\\_hcit\\\_internal\\\_four\\\_core.csv`
 

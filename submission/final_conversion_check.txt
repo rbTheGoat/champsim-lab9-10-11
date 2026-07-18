@@ -1,0 +1,23 @@
+FINAL REPORT CONVERSION CHECK
+Generated: 2026-07-18T17:08:52+00:00
+
+Input Markdown: reports/final_assignment_report.md
+DOCX: submission/computer_architecture_labs_9_10_11_report.docx
+PDF: submission/computer_architecture_labs_9_10_11_report.pdf
+
+DOCX size bytes: 25379
+PDF size bytes: 397199
+Embedded DOCX images: 0
+PDF pages: 18
+Rendered review PNGs: 18
+
+Automated conversion checks: PASS
+
+Manual review still required:
+1. Inspect every PNG under submission/review_pages.
+2. Check the title page and student details.
+3. Check the table of contents.
+4. Check that tables do not overflow or split badly.
+5. Check every graph and caption.
+6. Check page breaks around major sections.
+7. Open the final PDF once in a normal PDF viewer.
