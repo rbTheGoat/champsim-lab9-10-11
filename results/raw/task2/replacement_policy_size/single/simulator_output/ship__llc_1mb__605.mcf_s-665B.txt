@@ -1,0 +1,621 @@
+
+*** ChampSim Multicore Out-of-Order Simulator ***
+
+Warmup Instructions: 1000000
+Simulation Instructions: 10000000
+Number of CPUs: 1
+LLC sets: 1024
+LLC ways: 16
+Off-chip DRAM Size: 4096 MB Channels: 1 Width: 64-bit Data Rate: 3200 MT/s
+
+CPU 0 runs /home/raghav/CA_Lab9_10_11/ChampSim-master/dpc3_traces/605.mcf_s-665B.champsimtrace.xz
+Initialize SHIP state
+Assign rand_sets[0]: 454  LLC: 1024
+rand_sets[0]: 454
+Assign rand_sets[1]: 638  LLC: 1024
+rand_sets[1]: 638
+Assign rand_sets[2]: 897  LLC: 1024
+rand_sets[2]: 897
+Assign rand_sets[3]: 107  LLC: 1024
+rand_sets[3]: 107
+Assign rand_sets[4]: 331  LLC: 1024
+rand_sets[4]: 331
+Assign rand_sets[5]: 507  LLC: 1024
+rand_sets[5]: 507
+Assign rand_sets[6]: 482  LLC: 1024
+rand_sets[6]: 482
+Assign rand_sets[7]: 251  LLC: 1024
+rand_sets[7]: 251
+Assign rand_sets[8]: 852  LLC: 1024
+rand_sets[8]: 852
+Assign rand_sets[9]: 1014  LLC: 1024
+rand_sets[9]: 1014
+Assign rand_sets[10]: 701  LLC: 1024
+rand_sets[10]: 701
+Assign rand_sets[11]: 479  LLC: 1024
+rand_sets[11]: 479
+Assign rand_sets[12]: 892  LLC: 1024
+rand_sets[12]: 892
+Assign rand_sets[13]: 796  LLC: 1024
+rand_sets[13]: 796
+Assign rand_sets[14]: 481  LLC: 1024
+rand_sets[14]: 481
+Assign rand_sets[15]: 135  LLC: 1024
+rand_sets[15]: 135
+Assign rand_sets[16]: 513  LLC: 1024
+rand_sets[16]: 513
+Assign rand_sets[17]: 703  LLC: 1024
+rand_sets[17]: 703
+Assign rand_sets[18]: 561  LLC: 1024
+rand_sets[18]: 561
+Assign rand_sets[19]: 990  LLC: 1024
+rand_sets[19]: 990
+Assign rand_sets[20]: 342  LLC: 1024
+rand_sets[20]: 342
+Assign rand_sets[21]: 882  LLC: 1024
+rand_sets[21]: 882
+Assign rand_sets[22]: 15  LLC: 1024
+rand_sets[22]: 15
+Assign rand_sets[23]: 71  LLC: 1024
+rand_sets[23]: 71
+Assign rand_sets[24]: 103  LLC: 1024
+rand_sets[24]: 103
+Assign rand_sets[25]: 358  LLC: 1024
+rand_sets[25]: 358
+Assign rand_sets[26]: 647  LLC: 1024
+rand_sets[26]: 647
+Assign rand_sets[27]: 857  LLC: 1024
+rand_sets[27]: 857
+Assign rand_sets[28]: 426  LLC: 1024
+rand_sets[28]: 426
+Assign rand_sets[29]: 136  LLC: 1024
+rand_sets[29]: 136
+Assign rand_sets[30]: 828  LLC: 1024
+rand_sets[30]: 828
+Assign rand_sets[31]: 857  LLC: 1024
+Assign rand_sets[31]: 746  LLC: 1024
+rand_sets[31]: 746
+Assign rand_sets[32]: 598  LLC: 1024
+rand_sets[32]: 598
+Assign rand_sets[33]: 275  LLC: 1024
+rand_sets[33]: 275
+Assign rand_sets[34]: 635  LLC: 1024
+rand_sets[34]: 635
+Assign rand_sets[35]: 466  LLC: 1024
+rand_sets[35]: 466
+Assign rand_sets[36]: 389  LLC: 1024
+rand_sets[36]: 389
+Assign rand_sets[37]: 417  LLC: 1024
+rand_sets[37]: 417
+Assign rand_sets[38]: 472  LLC: 1024
+rand_sets[38]: 472
+Assign rand_sets[39]: 316  LLC: 1024
+rand_sets[39]: 316
+Assign rand_sets[40]: 852  LLC: 1024
+Assign rand_sets[40]: 341  LLC: 1024
+rand_sets[40]: 341
+Assign rand_sets[41]: 47  LLC: 1024
+rand_sets[41]: 47
+Assign rand_sets[42]: 823  LLC: 1024
+rand_sets[42]: 823
+Assign rand_sets[43]: 686  LLC: 1024
+rand_sets[43]: 686
+Assign rand_sets[44]: 613  LLC: 1024
+rand_sets[44]: 613
+Assign rand_sets[45]: 91  LLC: 1024
+rand_sets[45]: 91
+Assign rand_sets[46]: 986  LLC: 1024
+rand_sets[46]: 986
+Assign rand_sets[47]: 258  LLC: 1024
+rand_sets[47]: 258
+Assign rand_sets[48]: 633  LLC: 1024
+rand_sets[48]: 633
+Assign rand_sets[49]: 920  LLC: 1024
+rand_sets[49]: 920
+Assign rand_sets[50]: 204  LLC: 1024
+rand_sets[50]: 204
+Assign rand_sets[51]: 227  LLC: 1024
+rand_sets[51]: 227
+Assign rand_sets[52]: 794  LLC: 1024
+rand_sets[52]: 794
+Assign rand_sets[53]: 886  LLC: 1024
+rand_sets[53]: 886
+Assign rand_sets[54]: 398  LLC: 1024
+rand_sets[54]: 398
+Assign rand_sets[55]: 607  LLC: 1024
+rand_sets[55]: 607
+Assign rand_sets[56]: 217  LLC: 1024
+rand_sets[56]: 217
+Assign rand_sets[57]: 921  LLC: 1024
+rand_sets[57]: 921
+Assign rand_sets[58]: 143  LLC: 1024
+rand_sets[58]: 143
+Assign rand_sets[59]: 287  LLC: 1024
+rand_sets[59]: 287
+Assign rand_sets[60]: 319  LLC: 1024
+rand_sets[60]: 319
+Assign rand_sets[61]: 822  LLC: 1024
+rand_sets[61]: 822
+Assign rand_sets[62]: 238  LLC: 1024
+rand_sets[62]: 238
+Assign rand_sets[63]: 67  LLC: 1024
+rand_sets[63]: 67
+Assign rand_sets[64]: 888  LLC: 1024
+rand_sets[64]: 888
+Assign rand_sets[65]: 589  LLC: 1024
+rand_sets[65]: 589
+Assign rand_sets[66]: 269  LLC: 1024
+rand_sets[66]: 269
+Assign rand_sets[67]: 1018  LLC: 1024
+rand_sets[67]: 1018
+Assign rand_sets[68]: 958  LLC: 1024
+rand_sets[68]: 958
+Assign rand_sets[69]: 678  LLC: 1024
+rand_sets[69]: 678
+Assign rand_sets[70]: 474  LLC: 1024
+rand_sets[70]: 474
+Assign rand_sets[71]: 228  LLC: 1024
+rand_sets[71]: 228
+Assign rand_sets[72]: 390  LLC: 1024
+rand_sets[72]: 390
+Assign rand_sets[73]: 142  LLC: 1024
+rand_sets[73]: 142
+Assign rand_sets[74]: 732  LLC: 1024
+rand_sets[74]: 732
+Assign rand_sets[75]: 297  LLC: 1024
+rand_sets[75]: 297
+Assign rand_sets[76]: 109  LLC: 1024
+rand_sets[76]: 109
+Assign rand_sets[77]: 846  LLC: 1024
+rand_sets[77]: 846
+Assign rand_sets[78]: 767  LLC: 1024
+rand_sets[78]: 767
+Assign rand_sets[79]: 854  LLC: 1024
+rand_sets[79]: 854
+Assign rand_sets[80]: 993  LLC: 1024
+rand_sets[80]: 993
+Assign rand_sets[81]: 368  LLC: 1024
+rand_sets[81]: 368
+Assign rand_sets[82]: 544  LLC: 1024
+rand_sets[82]: 544
+Assign rand_sets[83]: 763  LLC: 1024
+rand_sets[83]: 763
+Assign rand_sets[84]: 399  LLC: 1024
+rand_sets[84]: 399
+Assign rand_sets[85]: 177  LLC: 1024
+rand_sets[85]: 177
+Assign rand_sets[86]: 856  LLC: 1024
+rand_sets[86]: 856
+Assign rand_sets[87]: 773  LLC: 1024
+rand_sets[87]: 773
+Assign rand_sets[88]: 656  LLC: 1024
+rand_sets[88]: 656
+Assign rand_sets[89]: 453  LLC: 1024
+rand_sets[89]: 453
+Assign rand_sets[90]: 9  LLC: 1024
+rand_sets[90]: 9
+Assign rand_sets[91]: 476  LLC: 1024
+rand_sets[91]: 476
+Assign rand_sets[92]: 851  LLC: 1024
+rand_sets[92]: 851
+Assign rand_sets[93]: 973  LLC: 1024
+rand_sets[93]: 973
+Assign rand_sets[94]: 938  LLC: 1024
+rand_sets[94]: 938
+Assign rand_sets[95]: 827  LLC: 1024
+rand_sets[95]: 827
+Assign rand_sets[96]: 584  LLC: 1024
+rand_sets[96]: 584
+Assign rand_sets[97]: 921  LLC: 1024
+Assign rand_sets[97]: 82  LLC: 1024
+rand_sets[97]: 82
+Assign rand_sets[98]: 979  LLC: 1024
+rand_sets[98]: 979
+Assign rand_sets[99]: 338  LLC: 1024
+rand_sets[99]: 338
+Assign rand_sets[100]: 669  LLC: 1024
+rand_sets[100]: 669
+Assign rand_sets[101]: 6  LLC: 1024
+rand_sets[101]: 6
+Assign rand_sets[102]: 671  LLC: 1024
+rand_sets[102]: 671
+Assign rand_sets[103]: 490  LLC: 1024
+rand_sets[103]: 490
+Assign rand_sets[104]: 437  LLC: 1024
+rand_sets[104]: 437
+Assign rand_sets[105]: 706  LLC: 1024
+rand_sets[105]: 706
+Assign rand_sets[106]: 6  LLC: 1024
+Assign rand_sets[106]: 19  LLC: 1024
+rand_sets[106]: 19
+Assign rand_sets[107]: 920  LLC: 1024
+Assign rand_sets[107]: 329  LLC: 1024
+rand_sets[107]: 329
+Assign rand_sets[108]: 690  LLC: 1024
+rand_sets[108]: 690
+Assign rand_sets[109]: 1  LLC: 1024
+rand_sets[109]: 1
+Assign rand_sets[110]: 798  LLC: 1024
+rand_sets[110]: 798
+Assign rand_sets[111]: 172  LLC: 1024
+rand_sets[111]: 172
+Assign rand_sets[112]: 562  LLC: 1024
+rand_sets[112]: 562
+Assign rand_sets[113]: 648  LLC: 1024
+rand_sets[113]: 648
+Assign rand_sets[114]: 305  LLC: 1024
+rand_sets[114]: 305
+Assign rand_sets[115]: 668  LLC: 1024
+rand_sets[115]: 668
+Assign rand_sets[116]: 850  LLC: 1024
+rand_sets[116]: 850
+Assign rand_sets[117]: 70  LLC: 1024
+rand_sets[117]: 70
+Assign rand_sets[118]: 661  LLC: 1024
+rand_sets[118]: 661
+Assign rand_sets[119]: 625  LLC: 1024
+rand_sets[119]: 625
+Assign rand_sets[120]: 566  LLC: 1024
+rand_sets[120]: 566
+Assign rand_sets[121]: 911  LLC: 1024
+rand_sets[121]: 911
+Assign rand_sets[122]: 343  LLC: 1024
+rand_sets[122]: 343
+Assign rand_sets[123]: 758  LLC: 1024
+rand_sets[123]: 758
+Assign rand_sets[124]: 569  LLC: 1024
+rand_sets[124]: 569
+Assign rand_sets[125]: 285  LLC: 1024
+rand_sets[125]: 285
+Assign rand_sets[126]: 534  LLC: 1024
+rand_sets[126]: 534
+Assign rand_sets[127]: 250  LLC: 1024
+rand_sets[127]: 250
+Assign rand_sets[128]: 904  LLC: 1024
+rand_sets[128]: 904
+Assign rand_sets[129]: 884  LLC: 1024
+rand_sets[129]: 884
+Assign rand_sets[130]: 245  LLC: 1024
+rand_sets[130]: 245
+Assign rand_sets[131]: 664  LLC: 1024
+rand_sets[131]: 664
+Assign rand_sets[132]: 636  LLC: 1024
+rand_sets[132]: 636
+Assign rand_sets[133]: 279  LLC: 1024
+rand_sets[133]: 279
+Assign rand_sets[134]: 604  LLC: 1024
+rand_sets[134]: 604
+Assign rand_sets[135]: 833  LLC: 1024
+rand_sets[135]: 833
+Assign rand_sets[136]: 187  LLC: 1024
+rand_sets[136]: 187
+Assign rand_sets[137]: 365  LLC: 1024
+rand_sets[137]: 365
+Assign rand_sets[138]: 881  LLC: 1024
+rand_sets[138]: 881
+Assign rand_sets[139]: 142  LLC: 1024
+Assign rand_sets[139]: 15  LLC: 1024
+Assign rand_sets[139]: 112  LLC: 1024
+rand_sets[139]: 112
+Assign rand_sets[140]: 601  LLC: 1024
+rand_sets[140]: 601
+Assign rand_sets[141]: 967  LLC: 1024
+rand_sets[141]: 967
+Assign rand_sets[142]: 769  LLC: 1024
+rand_sets[142]: 769
+Assign rand_sets[143]: 283  LLC: 1024
+rand_sets[143]: 283
+Assign rand_sets[144]: 559  LLC: 1024
+rand_sets[144]: 559
+Assign rand_sets[145]: 51  LLC: 1024
+rand_sets[145]: 51
+Assign rand_sets[146]: 829  LLC: 1024
+rand_sets[146]: 829
+Assign rand_sets[147]: 657  LLC: 1024
+rand_sets[147]: 657
+Assign rand_sets[148]: 704  LLC: 1024
+rand_sets[148]: 704
+Assign rand_sets[149]: 541  LLC: 1024
+rand_sets[149]: 541
+Assign rand_sets[150]: 421  LLC: 1024
+rand_sets[150]: 421
+Assign rand_sets[151]: 13  LLC: 1024
+rand_sets[151]: 13
+Assign rand_sets[152]: 13  LLC: 1024
+Assign rand_sets[152]: 683  LLC: 1024
+rand_sets[152]: 683
+Assign rand_sets[153]: 51  LLC: 1024
+Assign rand_sets[153]: 909  LLC: 1024
+rand_sets[153]: 909
+Assign rand_sets[154]: 382  LLC: 1024
+rand_sets[154]: 382
+Assign rand_sets[155]: 94  LLC: 1024
+rand_sets[155]: 94
+Assign rand_sets[156]: 399  LLC: 1024
+Assign rand_sets[156]: 830  LLC: 1024
+rand_sets[156]: 830
+Assign rand_sets[157]: 230  LLC: 1024
+rand_sets[157]: 230
+Assign rand_sets[158]: 104  LLC: 1024
+rand_sets[158]: 104
+Assign rand_sets[159]: 628  LLC: 1024
+rand_sets[159]: 628
+Assign rand_sets[160]: 422  LLC: 1024
+rand_sets[160]: 422
+Assign rand_sets[161]: 314  LLC: 1024
+rand_sets[161]: 314
+Assign rand_sets[162]: 177  LLC: 1024
+Assign rand_sets[162]: 195  LLC: 1024
+rand_sets[162]: 195
+Assign rand_sets[163]: 147  LLC: 1024
+rand_sets[163]: 147
+Assign rand_sets[164]: 273  LLC: 1024
+rand_sets[164]: 273
+Assign rand_sets[165]: 680  LLC: 1024
+rand_sets[165]: 680
+Assign rand_sets[166]: 100  LLC: 1024
+rand_sets[166]: 100
+Assign rand_sets[167]: 711  LLC: 1024
+rand_sets[167]: 711
+Assign rand_sets[168]: 219  LLC: 1024
+rand_sets[168]: 219
+Assign rand_sets[169]: 714  LLC: 1024
+rand_sets[169]: 714
+Assign rand_sets[170]: 480  LLC: 1024
+rand_sets[170]: 480
+Assign rand_sets[171]: 96  LLC: 1024
+rand_sets[171]: 96
+Assign rand_sets[172]: 225  LLC: 1024
+rand_sets[172]: 225
+Assign rand_sets[173]: 243  LLC: 1024
+rand_sets[173]: 243
+Assign rand_sets[174]: 703  LLC: 1024
+Assign rand_sets[174]: 521  LLC: 1024
+rand_sets[174]: 521
+Assign rand_sets[175]: 768  LLC: 1024
+rand_sets[175]: 768
+Assign rand_sets[176]: 359  LLC: 1024
+rand_sets[176]: 359
+Assign rand_sets[177]: 930  LLC: 1024
+rand_sets[177]: 930
+Assign rand_sets[178]: 739  LLC: 1024
+rand_sets[178]: 739
+Assign rand_sets[179]: 37  LLC: 1024
+rand_sets[179]: 37
+Assign rand_sets[180]: 672  LLC: 1024
+rand_sets[180]: 672
+Assign rand_sets[181]: 33  LLC: 1024
+rand_sets[181]: 33
+Assign rand_sets[182]: 305  LLC: 1024
+Assign rand_sets[182]: 391  LLC: 1024
+rand_sets[182]: 391
+Assign rand_sets[183]: 981  LLC: 1024
+rand_sets[183]: 981
+Assign rand_sets[184]: 98  LLC: 1024
+rand_sets[184]: 98
+Assign rand_sets[185]: 453  LLC: 1024
+Assign rand_sets[185]: 424  LLC: 1024
+rand_sets[185]: 424
+Assign rand_sets[186]: 79  LLC: 1024
+rand_sets[186]: 79
+Assign rand_sets[187]: 126  LLC: 1024
+rand_sets[187]: 126
+Assign rand_sets[188]: 558  LLC: 1024
+rand_sets[188]: 558
+Assign rand_sets[189]: 265  LLC: 1024
+rand_sets[189]: 265
+Assign rand_sets[190]: 875  LLC: 1024
+rand_sets[190]: 875
+Assign rand_sets[191]: 404  LLC: 1024
+rand_sets[191]: 404
+Assign rand_sets[192]: 415  LLC: 1024
+rand_sets[192]: 415
+Assign rand_sets[193]: 688  LLC: 1024
+rand_sets[193]: 688
+Assign rand_sets[194]: 365  LLC: 1024
+Assign rand_sets[194]: 169  LLC: 1024
+rand_sets[194]: 169
+Assign rand_sets[195]: 158  LLC: 1024
+rand_sets[195]: 158
+Assign rand_sets[196]: 90  LLC: 1024
+rand_sets[196]: 90
+Assign rand_sets[197]: 267  LLC: 1024
+rand_sets[197]: 267
+Assign rand_sets[198]: 838  LLC: 1024
+rand_sets[198]: 838
+Assign rand_sets[199]: 880  LLC: 1024
+rand_sets[199]: 880
+Assign rand_sets[200]: 640  LLC: 1024
+rand_sets[200]: 640
+Assign rand_sets[201]: 438  LLC: 1024
+rand_sets[201]: 438
+Assign rand_sets[202]: 463  LLC: 1024
+rand_sets[202]: 463
+Assign rand_sets[203]: 839  LLC: 1024
+rand_sets[203]: 839
+Assign rand_sets[204]: 12  LLC: 1024
+rand_sets[204]: 12
+Assign rand_sets[205]: 678  LLC: 1024
+Assign rand_sets[205]: 933  LLC: 1024
+rand_sets[205]: 933
+Assign rand_sets[206]: 554  LLC: 1024
+rand_sets[206]: 554
+Assign rand_sets[207]: 472  LLC: 1024
+Assign rand_sets[207]: 684  LLC: 1024
+rand_sets[207]: 684
+Assign rand_sets[208]: 251  LLC: 1024
+Assign rand_sets[208]: 416  LLC: 1024
+rand_sets[208]: 416
+Assign rand_sets[209]: 491  LLC: 1024
+rand_sets[209]: 491
+Assign rand_sets[210]: 183  LLC: 1024
+rand_sets[210]: 183
+Assign rand_sets[211]: 633  LLC: 1024
+Assign rand_sets[211]: 36  LLC: 1024
+rand_sets[211]: 36
+Assign rand_sets[212]: 626  LLC: 1024
+rand_sets[212]: 626
+Assign rand_sets[213]: 291  LLC: 1024
+rand_sets[213]: 291
+Assign rand_sets[214]: 658  LLC: 1024
+rand_sets[214]: 658
+Assign rand_sets[215]: 328  LLC: 1024
+rand_sets[215]: 328
+Assign rand_sets[216]: 128  LLC: 1024
+rand_sets[216]: 128
+Assign rand_sets[217]: 965  LLC: 1024
+rand_sets[217]: 965
+Assign rand_sets[218]: 166  LLC: 1024
+rand_sets[218]: 166
+Assign rand_sets[219]: 167  LLC: 1024
+rand_sets[219]: 167
+Assign rand_sets[220]: 645  LLC: 1024
+rand_sets[220]: 645
+Assign rand_sets[221]: 695  LLC: 1024
+rand_sets[221]: 695
+Assign rand_sets[222]: 471  LLC: 1024
+rand_sets[222]: 471
+Assign rand_sets[223]: 908  LLC: 1024
+rand_sets[223]: 908
+Assign rand_sets[224]: 656  LLC: 1024
+Assign rand_sets[224]: 484  LLC: 1024
+rand_sets[224]: 484
+Assign rand_sets[225]: 939  LLC: 1024
+rand_sets[225]: 939
+Assign rand_sets[226]: 355  LLC: 1024
+rand_sets[226]: 355
+Assign rand_sets[227]: 68  LLC: 1024
+rand_sets[227]: 68
+Assign rand_sets[228]: 850  LLC: 1024
+Assign rand_sets[228]: 102  LLC: 1024
+rand_sets[228]: 102
+Assign rand_sets[229]: 739  LLC: 1024
+Assign rand_sets[229]: 668  LLC: 1024
+Assign rand_sets[229]: 51  LLC: 1024
+Assign rand_sets[229]: 293  LLC: 1024
+rand_sets[229]: 293
+Assign rand_sets[230]: 1017  LLC: 1024
+rand_sets[230]: 1017
+Assign rand_sets[231]: 350  LLC: 1024
+rand_sets[231]: 350
+Assign rand_sets[232]: 682  LLC: 1024
+rand_sets[232]: 682
+Assign rand_sets[233]: 442  LLC: 1024
+rand_sets[233]: 442
+Assign rand_sets[234]: 115  LLC: 1024
+rand_sets[234]: 115
+Assign rand_sets[235]: 608  LLC: 1024
+rand_sets[235]: 608
+Assign rand_sets[236]: 93  LLC: 1024
+rand_sets[236]: 93
+Assign rand_sets[237]: 587  LLC: 1024
+rand_sets[237]: 587
+Assign rand_sets[238]: 881  LLC: 1024
+Assign rand_sets[238]: 638  LLC: 1024
+Assign rand_sets[238]: 446  LLC: 1024
+rand_sets[238]: 446
+Assign rand_sets[239]: 681  LLC: 1024
+rand_sets[239]: 681
+Assign rand_sets[240]: 396  LLC: 1024
+rand_sets[240]: 396
+Assign rand_sets[241]: 599  LLC: 1024
+rand_sets[241]: 599
+Assign rand_sets[242]: 537  LLC: 1024
+rand_sets[242]: 537
+Assign rand_sets[243]: 881  LLC: 1024
+Assign rand_sets[243]: 451  LLC: 1024
+rand_sets[243]: 451
+Assign rand_sets[244]: 714  LLC: 1024
+Assign rand_sets[244]: 94  LLC: 1024
+Assign rand_sets[244]: 229  LLC: 1024
+rand_sets[244]: 229
+Assign rand_sets[245]: 298  LLC: 1024
+rand_sets[245]: 298
+Assign rand_sets[246]: 307  LLC: 1024
+rand_sets[246]: 307
+Assign rand_sets[247]: 172  LLC: 1024
+Assign rand_sets[247]: 904  LLC: 1024
+Assign rand_sets[247]: 337  LLC: 1024
+rand_sets[247]: 337
+Assign rand_sets[248]: 870  LLC: 1024
+rand_sets[248]: 870
+Assign rand_sets[249]: 673  LLC: 1024
+rand_sets[249]: 673
+Assign rand_sets[250]: 635  LLC: 1024
+Assign rand_sets[250]: 373  LLC: 1024
+rand_sets[250]: 373
+Assign rand_sets[251]: 871  LLC: 1024
+rand_sets[251]: 871
+Assign rand_sets[252]: 100  LLC: 1024
+Assign rand_sets[252]: 922  LLC: 1024
+rand_sets[252]: 922
+Assign rand_sets[253]: 617  LLC: 1024
+rand_sets[253]: 617
+Assign rand_sets[254]: 751  LLC: 1024
+rand_sets[254]: 751
+Assign rand_sets[255]: 623  LLC: 1024
+rand_sets[255]: 623
+
+Warmup complete CPU 0 instructions: 1000001 cycles: 412228 (Simulation time: 0 hr 0 min 2 sec) 
+
+Heartbeat CPU 0 instructions: 10000000 cycles: 26291727 heartbeat IPC: 0.380348 cumulative IPC: 0.347766 (Simulation time: 0 hr 0 min 14 sec) 
+Finished CPU 0 instructions: 10000000 cycles: 28699342 cumulative IPC: 0.34844 (Simulation time: 0 hr 0 min 16 sec) 
+
+ChampSim completed all CPUs
+
+Region of Interest Statistics
+
+CPU 0 cumulative IPC: 0.34844 instructions: 10000000 cycles: 28699342
+L1D TOTAL     ACCESS:    3607004  HIT:    3186366  MISS:     420638
+L1D LOAD      ACCESS:    2539951  HIT:    2157962  MISS:     381989
+L1D RFO       ACCESS:    1067053  HIT:    1028404  MISS:      38649
+L1D PREFETCH  ACCESS:          0  HIT:          0  MISS:          0
+L1D WRITEBACK ACCESS:          0  HIT:          0  MISS:          0
+L1D PREFETCH  REQUESTED:          0  ISSUED:          0  USEFUL:          0  USELESS:          0
+L1D AVERAGE MISS LATENCY: 87.8723 cycles
+L1I TOTAL     ACCESS:    1872577  HIT:    1872577  MISS:          0
+L1I LOAD      ACCESS:    1872577  HIT:    1872577  MISS:          0
+L1I RFO       ACCESS:          0  HIT:          0  MISS:          0
+L1I PREFETCH  ACCESS:          0  HIT:          0  MISS:          0
+L1I WRITEBACK ACCESS:          0  HIT:          0  MISS:          0
+L1I PREFETCH  REQUESTED:          0  ISSUED:          0  USEFUL:          0  USELESS:          0
+L1I AVERAGE MISS LATENCY: -nan cycles
+L2C TOTAL     ACCESS:     475660  HIT:     163616  MISS:     312044
+L2C LOAD      ACCESS:     381985  HIT:      99131  MISS:     282854
+L2C RFO       ACCESS:      38648  HIT:       9502  MISS:      29146
+L2C PREFETCH  ACCESS:          0  HIT:          0  MISS:          0
+L2C WRITEBACK ACCESS:      55027  HIT:      54983  MISS:         44
+L2C PREFETCH  REQUESTED:          0  ISSUED:          0  USEFUL:          0  USELESS:          0
+L2C AVERAGE MISS LATENCY: 97.8301 cycles
+LLC TOTAL     ACCESS:     350997  HIT:     197613  MISS:     153384
+LLC LOAD      ACCESS:     282853  HIT:     129985  MISS:     152868
+LLC RFO       ACCESS:      29146  HIT:      28985  MISS:        161
+LLC PREFETCH  ACCESS:          0  HIT:          0  MISS:          0
+LLC WRITEBACK ACCESS:      38998  HIT:      38643  MISS:        355
+LLC PREFETCH  REQUESTED:          0  ISSUED:          0  USEFUL:          0  USELESS:          0
+LLC AVERAGE MISS LATENCY: 137.057 cycles
+Major fault: 0 Minor fault: 3007
+
+DRAM Statistics
+ CHANNEL 0
+ RQ ROW_BUFFER_HIT:      60437  ROW_BUFFER_MISS:      92592
+ DBUS_CONGESTED:      20489
+ WQ ROW_BUFFER_HIT:        337  ROW_BUFFER_MISS:        719  FULL:          0
+
+ AVG_CONGESTED_CYCLE: 5
+
+CPU 0 Branch Prediction Accuracy: 93.0967% MPKI: 17.2468 Average ROB Occupancy at Mispredict: 26.8259
+
+CPU 0 Average Predictor Lookup Latency (ns): 115.778
+CPU 0 Predictor Lookup Samples: 2498358
+
+Branch types
+NOT_BRANCH: 7501276 75.0128%
+BRANCH_DIRECT_JUMP: 263746 2.63746%
+BRANCH_INDIRECT: 0 0%
+BRANCH_CONDITIONAL: 1699800 16.998%
+BRANCH_DIRECT_CALL: 252572 2.52572%
+BRANCH_INDIRECT_CALL: 14836 0.14836%
+BRANCH_RETURN: 267404 2.67404%
+BRANCH_OTHER: 0 0%
+
