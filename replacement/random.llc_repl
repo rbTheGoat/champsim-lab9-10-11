@@ -1,0 +1,109 @@
+#include "cache.h"
+
+// -----------------------------------------------------------------------------
+// Deterministic Random LLC replacement policy
+//
+// Victim rule:
+//   1. Prefer an invalid way when the set is not full.
+//   2. Otherwise choose one way using a per-core xorshift64* generator.
+//
+// A fixed initialization seed is used so that repeated experiments are
+// reproducible.
+// -----------------------------------------------------------------------------
+
+uint64_t random_repl_state[NUM_CPUS];
+
+uint64_t random_victim_selections = 0;
+uint64_t random_invalid_selections = 0;
+
+static uint64_t random_repl_next(uint32_t cpu)
+{
+    uint32_t index = cpu % NUM_CPUS;
+    uint64_t x = random_repl_state[index];
+
+    // xorshift64*
+    x ^= x >> 12;
+    x ^= x << 25;
+    x ^= x >> 27;
+
+    random_repl_state[index] = x;
+    return x * 2685821657736338717ULL;
+}
+
+// initialize replacement state
+void CACHE::llc_initialize_replacement()
+{
+    cout << "Initialize deterministic Random replacement state" << endl;
+
+    for (uint32_t cpu = 0; cpu < NUM_CPUS; cpu++) {
+        random_repl_state[cpu] =
+            0x9E3779B97F4A7C15ULL
+            ^ (0xD1B54A32D192ED03ULL * (cpu + 1));
+    }
+
+    random_victim_selections = 0;
+    random_invalid_selections = 0;
+}
+
+// find replacement victim
+uint32_t CACHE::llc_find_victim(
+    uint32_t cpu,
+    uint64_t instr_id,
+    uint32_t set,
+    const BLOCK *current_set,
+    uint64_t ip,
+    uint64_t full_addr,
+    uint32_t type
+)
+{
+    (void)instr_id;
+    (void)set;
+    (void)ip;
+    (void)full_addr;
+    (void)type;
+
+    // Always use an invalid way before replacing a valid block.
+    for (uint32_t way = 0; way < LLC_WAY; way++) {
+        if (current_set[way].valid == 0) {
+            random_invalid_selections++;
+            return way;
+        }
+    }
+
+    random_victim_selections++;
+    return static_cast<uint32_t>(
+        random_repl_next(cpu) % LLC_WAY
+    );
+}
+
+// Random replacement does not require recency or prediction state.
+void CACHE::llc_update_replacement_state(
+    uint32_t cpu,
+    uint32_t set,
+    uint32_t way,
+    uint64_t full_addr,
+    uint64_t ip,
+    uint64_t victim_addr,
+    uint32_t type,
+    uint8_t hit
+)
+{
+    (void)cpu;
+    (void)set;
+    (void)way;
+    (void)full_addr;
+    (void)ip;
+    (void)victim_addr;
+    (void)type;
+    (void)hit;
+}
+
+// use this function to print out your own stats at the end of simulation
+void CACHE::llc_replacement_final_stats()
+{
+    cout << "Random Replacement Statistics" << endl;
+    cout << "Random invalid-way selections: "
+         << random_invalid_selections << endl;
+    cout << "Random valid victim selections: "
+         << random_victim_selections << endl;
+}

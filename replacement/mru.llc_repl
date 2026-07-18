@@ -1,0 +1,95 @@
+#include "cache.h"
+
+// -----------------------------------------------------------------------------
+// Most Recently Used (MRU) LLC replacement policy
+//
+// Victim rule:
+//   1. Prefer an invalid way when the set is not full.
+//   2. Otherwise evict the way that was accessed most recently.
+//
+// State:
+//   One most-recently-used way index per LLC set.
+// -----------------------------------------------------------------------------
+
+uint32_t mru_way[LLC_SET];
+
+uint64_t mru_victim_selections = 0;
+uint64_t mru_invalid_selections = 0;
+uint64_t mru_state_updates = 0;
+
+// initialize replacement state
+void CACHE::llc_initialize_replacement()
+{
+    cout << "Initialize MRU state" << endl;
+
+    for (uint32_t set = 0; set < LLC_SET; set++)
+        mru_way[set] = 0;
+
+    mru_victim_selections = 0;
+    mru_invalid_selections = 0;
+    mru_state_updates = 0;
+}
+
+// find replacement victim
+uint32_t CACHE::llc_find_victim(
+    uint32_t cpu,
+    uint64_t instr_id,
+    uint32_t set,
+    const BLOCK *current_set,
+    uint64_t ip,
+    uint64_t full_addr,
+    uint32_t type
+)
+{
+    (void)cpu;
+    (void)instr_id;
+    (void)ip;
+    (void)full_addr;
+    (void)type;
+
+    // Always use an invalid way before evicting a valid block.
+    for (uint32_t way = 0; way < LLC_WAY; way++) {
+        if (current_set[way].valid == 0) {
+            mru_invalid_selections++;
+            return way;
+        }
+    }
+
+    mru_victim_selections++;
+    return mru_way[set];
+}
+
+// called on every cache hit and cache fill
+void CACHE::llc_update_replacement_state(
+    uint32_t cpu,
+    uint32_t set,
+    uint32_t way,
+    uint64_t full_addr,
+    uint64_t ip,
+    uint64_t victim_addr,
+    uint32_t type,
+    uint8_t hit
+)
+{
+    (void)cpu;
+    (void)full_addr;
+    (void)ip;
+    (void)victim_addr;
+
+    // Match the supplied LRU policy's writeback-hit treatment:
+    // a writeback hit does not change recency.
+    if (hit && (type == WRITEBACK))
+        return;
+
+    mru_way[set] = way;
+    mru_state_updates++;
+}
+
+// use this function to print out your own stats at the end of simulation
+void CACHE::llc_replacement_final_stats()
+{
+    cout << "MRU Replacement Statistics" << endl;
+    cout << "MRU invalid-way selections: " << mru_invalid_selections << endl;
+    cout << "MRU valid victim selections: " << mru_victim_selections << endl;
+    cout << "MRU recency updates: " << mru_state_updates << endl;
+}
