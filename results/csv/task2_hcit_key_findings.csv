@@ -1,0 +1,17 @@
+scope,llc_size_mb,comparison,metric,baseline,hcit,percent_change
+single-core,1,HCIT vs LRU,geomean_ipc,0.6976128171714356,0.6935547159536926,-0.5817125370771132
+single-core,1,HCIT vs best baseline (lru),geomean_ipc,0.6976128171714356,0.6935547159536926,-0.5817125370771132
+four-core,1,HCIT vs LRU,sum_ipc,2.1158987,2.1981071,3.885271067088434
+four-core,1,HCIT vs best baseline (srrip),sum_ipc,2.9045977,2.1981071,-24.323182518529155
+single-core,2,HCIT vs LRU,geomean_ipc,0.7759630028904818,0.7590052201181008,-2.1853854770411547
+single-core,2,HCIT vs best baseline (lru),geomean_ipc,0.7759630028904818,0.7590052201181008,-2.1853854770411547
+four-core,2,HCIT vs LRU,sum_ipc,3.216118,2.6213262,-18.494091323763616
+four-core,2,HCIT vs best baseline (ship),sum_ipc,3.267608,2.6213262,-19.77843731561436
+single-core,4,HCIT vs LRU,geomean_ipc,0.832925571055153,0.8191930473601776,-1.64870958128695
+single-core,4,HCIT vs best baseline (lru),geomean_ipc,0.832925571055153,0.8191930473601776,-1.64870958128695
+four-core,4,HCIT vs LRU,sum_ipc,3.326025,2.8308941,-14.886565795506646
+four-core,4,HCIT vs best baseline (ship),sum_ipc,3.390684,2.8308941,-16.509645251518567
+single-core,8,HCIT vs LRU,geomean_ipc,0.8527312440844426,0.8481995848077429,-0.5314287834691884
+single-core,8,HCIT vs best baseline (srrip),geomean_ipc,0.8548613742806527,0.8481995848077429,-0.779283012817779
+four-core,8,HCIT vs LRU,sum_ipc,3.5949129999999996,3.206442,-10.806130774235694
+four-core,8,HCIT vs best baseline (ship),sum_ipc,3.62326,3.206442,-11.503949481958239
