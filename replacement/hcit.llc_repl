@@ -1,0 +1,633 @@
+#include "cache.h"
+
+// -----------------------------------------------------------------------------
+// Adaptive Hard-to-Cache Identification Table (HCIT) replacement policy
+//
+// The policy uses:
+//   1. A small hashed candidate filter for all PCs/regions.
+//   2. A set-associative HCIT allocated only to repeatedly difficult candidates.
+//   3. Per-HCIT-entry miss, insertion, hit, and eviction counters.
+//   4. RRIP-based insertion and delayed eviction for protected blocks.
+//   5. An adaptive HCIT admission/protection threshold.
+// -----------------------------------------------------------------------------
+
+#define HCIT_SETS 512
+#define HCIT_WAYS 4
+#define HCIT_ENTRIES (HCIT_SETS * HCIT_WAYS)
+
+#define HCIT_FILTER_SIZE 4096
+#define HCIT_MAX_SCORE 31
+#define HCIT_INITIAL_THRESHOLD 6
+#define HCIT_MIN_THRESHOLD 3
+#define HCIT_MAX_THRESHOLD 12
+#define HCIT_EPOCH_ACCESSES 16384
+
+#define HCIT_MAX_RRPV 3
+#define HCIT_NORMAL_INSERT_RRPV 2
+#define HCIT_PROTECTED_INSERT_RRPV 0
+
+class HCIT_ENTRY
+{
+  public:
+    uint8_t valid;
+    uint8_t score;
+    uint8_t stale_epochs;
+
+    uint16_t misses;
+    uint16_t insertions;
+    uint16_t hits;
+    uint16_t evictions;
+
+    uint64_t signature;
+    uint32_t last_touch;
+
+    HCIT_ENTRY()
+    {
+        valid = 0;
+        score = 0;
+        stale_epochs = 0;
+
+        misses = 0;
+        insertions = 0;
+        hits = 0;
+        evictions = 0;
+
+        signature = 0;
+        last_touch = 0;
+    }
+};
+
+HCIT_ENTRY hcit_table[HCIT_SETS][HCIT_WAYS];
+
+uint8_t hcit_candidate_filter[HCIT_FILTER_SIZE];
+uint8_t hcit_rrpv[LLC_SET][LLC_WAY];
+
+uint64_t hcit_line_signature[LLC_SET][LLC_WAY];
+uint8_t hcit_line_signature_valid[LLC_SET][LLC_WAY];
+
+uint32_t hcit_admission_threshold = HCIT_INITIAL_THRESHOLD;
+uint32_t hcit_clock = 0;
+uint32_t hcit_occupancy = 0;
+
+// Lifetime statistics
+uint64_t hcit_total_accesses = 0;
+uint64_t hcit_admissions = 0;
+uint64_t hcit_rejected_admissions = 0;
+uint64_t hcit_entry_replacements = 0;
+uint64_t hcit_entry_removals = 0;
+uint64_t hcit_threshold_increases = 0;
+uint64_t hcit_threshold_decreases = 0;
+
+uint64_t hcit_protected_fills = 0;
+uint64_t hcit_normal_fills = 0;
+uint64_t hcit_protected_hits = 0;
+uint64_t hcit_protected_evictions = 0;
+uint64_t hcit_unprotected_victims = 0;
+uint64_t hcit_forced_protected_victims = 0;
+
+// Per-epoch utility statistics
+uint64_t hcit_epoch_protected_hits = 0;
+uint64_t hcit_epoch_protected_evictions = 0;
+
+static uint64_t hcit_hash64(uint64_t value)
+{
+    value ^= value >> 33;
+    value *= 0xff51afd7ed558ccdULL;
+    value ^= value >> 33;
+    value *= 0xc4ceb9fe1a85ec53ULL;
+    value ^= value >> 33;
+    return value;
+}
+
+static uint64_t hcit_make_signature(uint64_t ip, uint64_t full_addr)
+{
+    // Demand/RFO/prefetch requests use the instruction PC.
+    if (ip)
+        return hcit_hash64(ip);
+
+    // Writebacks have no useful instruction PC in this simulator. Use a
+    // 4-KB memory-region signature and set the top bit to distinguish it.
+    return hcit_hash64(full_addr >> 12) | (1ULL << 63);
+}
+
+static uint32_t hcit_filter_index(uint64_t signature)
+{
+    return (uint32_t)(hcit_hash64(signature) % HCIT_FILTER_SIZE);
+}
+
+static uint32_t hcit_set_index(uint64_t signature)
+{
+    return (uint32_t)(hcit_hash64(signature ^ 0x9E3779B97F4A7C15ULL)
+                      % HCIT_SETS);
+}
+
+static void hcit_sat_increment_u16(uint16_t &value)
+{
+    if (value < 65535)
+        value++;
+}
+
+static void hcit_raise_score(HCIT_ENTRY &entry, uint8_t amount)
+{
+    uint32_t next = (uint32_t)entry.score + amount;
+
+    if (next > HCIT_MAX_SCORE)
+        next = HCIT_MAX_SCORE;
+
+    entry.score = (uint8_t)next;
+}
+
+static int hcit_find_entry(uint64_t signature)
+{
+    uint32_t set = hcit_set_index(signature);
+
+    for (uint32_t way = 0; way < HCIT_WAYS; way++) {
+        if (hcit_table[set][way].valid
+            && hcit_table[set][way].signature == signature)
+            return (int)way;
+    }
+
+    return -1;
+}
+
+static HCIT_ENTRY *hcit_lookup(uint64_t signature)
+{
+    uint32_t set = hcit_set_index(signature);
+    int way = hcit_find_entry(signature);
+
+    if (way < 0)
+        return NULL;
+
+    return &hcit_table[set][way];
+}
+
+static uint8_t hcit_is_hard_entry(const HCIT_ENTRY *entry)
+{
+    return entry
+        && entry->valid
+        && entry->score >= hcit_admission_threshold;
+}
+
+static HCIT_ENTRY *hcit_admit(uint64_t signature, uint8_t pressure)
+{
+    uint32_t set = hcit_set_index(signature);
+    int selected_way = -1;
+
+    // Prefer an unused HCIT entry.
+    for (uint32_t way = 0; way < HCIT_WAYS; way++) {
+        if (hcit_table[set][way].valid == 0) {
+            selected_way = (int)way;
+            break;
+        }
+    }
+
+    // Otherwise replace the least-hard entry; use oldest touch as tie-breaker.
+    if (selected_way < 0) {
+        selected_way = 0;
+
+        for (uint32_t way = 1; way < HCIT_WAYS; way++) {
+            HCIT_ENTRY &candidate = hcit_table[set][way];
+            HCIT_ENTRY &selected = hcit_table[set][selected_way];
+
+            if (candidate.score < selected.score
+                || (candidate.score == selected.score
+                    && candidate.last_touch < selected.last_touch))
+                selected_way = (int)way;
+        }
+
+        HCIT_ENTRY &victim = hcit_table[set][selected_way];
+
+        // Do not discard a clearly harder HCIT entry for a weaker candidate.
+        if (victim.score > pressure + 2) {
+            hcit_rejected_admissions++;
+            return NULL;
+        }
+
+        hcit_entry_replacements++;
+    } else {
+        hcit_occupancy++;
+    }
+
+    HCIT_ENTRY &entry = hcit_table[set][selected_way];
+
+    entry.valid = 1;
+    entry.signature = signature;
+    entry.score = pressure;
+    if (entry.score < hcit_admission_threshold)
+        entry.score = (uint8_t)hcit_admission_threshold;
+
+    entry.stale_epochs = 0;
+    entry.misses = 0;
+    entry.insertions = 0;
+    entry.hits = 0;
+    entry.evictions = 0;
+    entry.last_touch = ++hcit_clock;
+
+    hcit_admissions++;
+    return &entry;
+}
+
+static HCIT_ENTRY *hcit_observe_miss(uint64_t signature)
+{
+    uint32_t filter_index = hcit_filter_index(signature);
+
+    if (hcit_candidate_filter[filter_index] < 15)
+        hcit_candidate_filter[filter_index]++;
+
+    HCIT_ENTRY *entry = hcit_lookup(signature);
+
+    if (!entry
+        && hcit_candidate_filter[filter_index] >= hcit_admission_threshold)
+        entry = hcit_admit(
+            signature,
+            hcit_candidate_filter[filter_index]
+        );
+
+    if (entry) {
+        hcit_sat_increment_u16(entry->misses);
+        hcit_sat_increment_u16(entry->insertions);
+        hcit_raise_score(*entry, 2);
+        entry->last_touch = ++hcit_clock;
+        entry->stale_epochs = 0;
+    }
+
+    return entry;
+}
+
+static void hcit_observe_hit(uint64_t signature)
+{
+    uint32_t filter_index = hcit_filter_index(signature);
+
+    if (hcit_candidate_filter[filter_index] > 0)
+        hcit_candidate_filter[filter_index]--;
+
+    HCIT_ENTRY *entry = hcit_lookup(signature);
+
+    if (!entry)
+        return;
+
+    uint8_t was_protected = hcit_is_hard_entry(entry);
+
+    hcit_sat_increment_u16(entry->hits);
+
+    if (entry->score > 0)
+        entry->score--;
+
+    entry->last_touch = ++hcit_clock;
+    entry->stale_epochs = 0;
+
+    if (was_protected) {
+        hcit_protected_hits++;
+        hcit_epoch_protected_hits++;
+    }
+}
+
+static void hcit_observe_eviction(uint64_t signature)
+{
+    HCIT_ENTRY *entry = hcit_lookup(signature);
+
+    if (!entry)
+        return;
+
+    uint8_t was_protected = hcit_is_hard_entry(entry);
+
+    hcit_sat_increment_u16(entry->evictions);
+    hcit_raise_score(*entry, 2);
+    entry->last_touch = ++hcit_clock;
+    entry->stale_epochs = 0;
+
+    if (was_protected) {
+        hcit_protected_evictions++;
+        hcit_epoch_protected_evictions++;
+    }
+}
+
+static uint8_t hcit_line_is_protected(uint32_t set, uint32_t way)
+{
+    if (hcit_line_signature_valid[set][way] == 0)
+        return 0;
+
+    HCIT_ENTRY *entry = hcit_lookup(
+        hcit_line_signature[set][way]
+    );
+
+    return hcit_is_hard_entry(entry);
+}
+
+static void hcit_epoch_update()
+{
+    uint32_t protected_events =
+        (uint32_t)(hcit_epoch_protected_hits
+                   + hcit_epoch_protected_evictions);
+
+    uint32_t utility_percent = 0;
+
+    if (protected_events) {
+        utility_percent = (uint32_t)(
+            (100 * hcit_epoch_protected_hits)
+            / protected_events
+        );
+    }
+
+    uint32_t occupancy_percent =
+        (100 * hcit_occupancy) / HCIT_ENTRIES;
+
+    // Adapt admission/protection selectivity.
+    if ((occupancy_percent > 70 && utility_percent < 35)
+        || (hcit_epoch_protected_evictions
+            > 2 * hcit_epoch_protected_hits)) {
+        if (hcit_admission_threshold < HCIT_MAX_THRESHOLD) {
+            hcit_admission_threshold++;
+            hcit_threshold_increases++;
+        }
+    } else if (
+        (occupancy_percent < 25 && utility_percent > 50)
+        || (occupancy_percent < 50
+            && hcit_epoch_protected_hits
+               > 3 * hcit_epoch_protected_evictions)
+    ) {
+        if (hcit_admission_threshold > HCIT_MIN_THRESHOLD) {
+            hcit_admission_threshold--;
+            hcit_threshold_decreases++;
+        }
+    }
+
+    // Decay the candidate filter so old behavior does not dominate forever.
+    for (uint32_t index = 0; index < HCIT_FILTER_SIZE; index++)
+        hcit_candidate_filter[index] >>= 1;
+
+    // Recalculate recent hardness and remove stale/easy entries.
+    for (uint32_t set = 0; set < HCIT_SETS; set++) {
+        for (uint32_t way = 0; way < HCIT_WAYS; way++) {
+            HCIT_ENTRY &entry = hcit_table[set][way];
+
+            if (entry.valid == 0)
+                continue;
+
+            entry.misses >>= 1;
+            entry.insertions >>= 1;
+            entry.hits >>= 1;
+            entry.evictions >>= 1;
+
+            int metric =
+                2 * (int)entry.misses
+                + 2 * (int)entry.evictions
+                + (int)entry.insertions
+                - 2 * (int)entry.hits;
+
+            if (metric < 0)
+                metric = 0;
+            if (metric > HCIT_MAX_SCORE)
+                metric = HCIT_MAX_SCORE;
+
+            entry.score = (uint8_t)metric;
+
+            uint32_t activity =
+                entry.misses
+                + entry.insertions
+                + entry.hits
+                + entry.evictions;
+
+            if (entry.score < (hcit_admission_threshold / 2)
+                && activity <= 1) {
+                if (entry.stale_epochs < 255)
+                    entry.stale_epochs++;
+            } else {
+                entry.stale_epochs = 0;
+            }
+
+            if (entry.stale_epochs >= 2) {
+                entry.valid = 0;
+                entry.score = 0;
+                entry.signature = 0;
+                entry.stale_epochs = 0;
+
+                if (hcit_occupancy > 0)
+                    hcit_occupancy--;
+
+                hcit_entry_removals++;
+            }
+        }
+    }
+
+    hcit_epoch_protected_hits = 0;
+    hcit_epoch_protected_evictions = 0;
+}
+
+static void hcit_count_access_and_maybe_update()
+{
+    hcit_total_accesses++;
+
+    if ((hcit_total_accesses % HCIT_EPOCH_ACCESSES) == 0)
+        hcit_epoch_update();
+}
+
+// initialize replacement state
+void CACHE::llc_initialize_replacement()
+{
+    cout << "Initialize Adaptive HCIT replacement state" << endl;
+
+    for (uint32_t set = 0; set < LLC_SET; set++) {
+        for (uint32_t way = 0; way < LLC_WAY; way++) {
+            hcit_rrpv[set][way] = HCIT_MAX_RRPV;
+            hcit_line_signature[set][way] = 0;
+            hcit_line_signature_valid[set][way] = 0;
+        }
+    }
+
+    for (uint32_t set = 0; set < HCIT_SETS; set++) {
+        for (uint32_t way = 0; way < HCIT_WAYS; way++)
+            hcit_table[set][way] = HCIT_ENTRY();
+    }
+
+    for (uint32_t index = 0; index < HCIT_FILTER_SIZE; index++)
+        hcit_candidate_filter[index] = 0;
+
+    hcit_admission_threshold = HCIT_INITIAL_THRESHOLD;
+    hcit_clock = 0;
+    hcit_occupancy = 0;
+
+    hcit_total_accesses = 0;
+    hcit_admissions = 0;
+    hcit_rejected_admissions = 0;
+    hcit_entry_replacements = 0;
+    hcit_entry_removals = 0;
+    hcit_threshold_increases = 0;
+    hcit_threshold_decreases = 0;
+
+    hcit_protected_fills = 0;
+    hcit_normal_fills = 0;
+    hcit_protected_hits = 0;
+    hcit_protected_evictions = 0;
+    hcit_unprotected_victims = 0;
+    hcit_forced_protected_victims = 0;
+
+    hcit_epoch_protected_hits = 0;
+    hcit_epoch_protected_evictions = 0;
+}
+
+// find replacement victim
+uint32_t CACHE::llc_find_victim(
+    uint32_t cpu,
+    uint64_t instr_id,
+    uint32_t set,
+    const BLOCK *current_set,
+    uint64_t ip,
+    uint64_t full_addr,
+    uint32_t type
+)
+{
+    (void)cpu;
+    (void)instr_id;
+    (void)ip;
+    (void)full_addr;
+    (void)type;
+
+    // Always fill an invalid way first.
+    for (uint32_t way = 0; way < LLC_WAY; way++) {
+        if (current_set[way].valid == 0)
+            return way;
+    }
+
+    while (1) {
+        // Prefer a maximum-RRPV block that is not HCIT-protected.
+        for (uint32_t way = 0; way < LLC_WAY; way++) {
+            if (hcit_rrpv[set][way] == HCIT_MAX_RRPV
+                && hcit_line_is_protected(set, way) == 0) {
+                hcit_unprotected_victims++;
+                return way;
+            }
+        }
+
+        // Age unprotected blocks first. This delays protected eviction.
+        uint8_t found_unprotected = 0;
+
+        for (uint32_t way = 0; way < LLC_WAY; way++) {
+            if (hcit_line_is_protected(set, way) == 0) {
+                found_unprotected = 1;
+
+                if (hcit_rrpv[set][way] < HCIT_MAX_RRPV)
+                    hcit_rrpv[set][way]++;
+            }
+        }
+
+        if (found_unprotected)
+            continue;
+
+        // All ways are protected. A protected line must now be selected.
+        for (uint32_t way = 0; way < LLC_WAY; way++) {
+            if (hcit_rrpv[set][way] == HCIT_MAX_RRPV) {
+                hcit_forced_protected_victims++;
+                return way;
+            }
+        }
+
+        for (uint32_t way = 0; way < LLC_WAY; way++) {
+            if (hcit_rrpv[set][way] < HCIT_MAX_RRPV)
+                hcit_rrpv[set][way]++;
+        }
+    }
+}
+
+// called on every cache hit and cache fill
+void CACHE::llc_update_replacement_state(
+    uint32_t cpu,
+    uint32_t set,
+    uint32_t way,
+    uint64_t full_addr,
+    uint64_t ip,
+    uint64_t victim_addr,
+    uint32_t type,
+    uint8_t hit
+)
+{
+    (void)cpu;
+
+    hcit_count_access_and_maybe_update();
+
+    // Match the supplied LRU behavior: a writeback hit does not update
+    // replacement state or reuse classification.
+    if (hit && type == WRITEBACK)
+        return;
+
+    if (hit) {
+        uint64_t signature = hcit_make_signature(ip, full_addr);
+
+        if (hcit_line_signature_valid[set][way])
+            signature = hcit_line_signature[set][way];
+
+        hcit_observe_hit(signature);
+        hcit_rrpv[set][way] = 0;
+        return;
+    }
+
+    // Account for the block being replaced before overwriting metadata.
+    if (victim_addr
+        && hcit_line_signature_valid[set][way]) {
+        hcit_observe_eviction(
+            hcit_line_signature[set][way]
+        );
+    }
+
+    uint64_t signature = hcit_make_signature(ip, full_addr);
+    HCIT_ENTRY *entry = hcit_observe_miss(signature);
+    uint8_t protected_fill = hcit_is_hard_entry(entry);
+
+    if (protected_fill) {
+        hcit_rrpv[set][way] = HCIT_PROTECTED_INSERT_RRPV;
+        hcit_protected_fills++;
+    } else {
+        hcit_rrpv[set][way] = HCIT_NORMAL_INSERT_RRPV;
+        hcit_normal_fills++;
+    }
+
+    hcit_line_signature[set][way] = signature;
+    hcit_line_signature_valid[set][way] = 1;
+}
+
+// use this function to print out your own stats at the end of simulation
+void CACHE::llc_replacement_final_stats()
+{
+    uint64_t protected_events =
+        hcit_protected_hits + hcit_protected_evictions;
+
+    double protected_utility = 0.0;
+
+    if (protected_events) {
+        protected_utility =
+            (100.0 * hcit_protected_hits)
+            / protected_events;
+    }
+
+    cout << "HCIT Replacement Statistics" << endl;
+    cout << "HCIT total LLC updates: " << hcit_total_accesses << endl;
+    cout << "HCIT final admission threshold: "
+         << hcit_admission_threshold << endl;
+    cout << "HCIT threshold increases: "
+         << hcit_threshold_increases << endl;
+    cout << "HCIT threshold decreases: "
+         << hcit_threshold_decreases << endl;
+    cout << "HCIT final occupancy: "
+         << hcit_occupancy << " / " << HCIT_ENTRIES << endl;
+    cout << "HCIT admissions: " << hcit_admissions << endl;
+    cout << "HCIT rejected admissions: "
+         << hcit_rejected_admissions << endl;
+    cout << "HCIT entry replacements: "
+         << hcit_entry_replacements << endl;
+    cout << "HCIT stale entry removals: "
+         << hcit_entry_removals << endl;
+    cout << "HCIT protected fills: "
+         << hcit_protected_fills << endl;
+    cout << "HCIT normal fills: "
+         << hcit_normal_fills << endl;
+    cout << "HCIT protected hits: "
+         << hcit_protected_hits << endl;
+    cout << "HCIT protected evictions: "
+         << hcit_protected_evictions << endl;
+    cout << "HCIT protected utility percent: "
+         << protected_utility << endl;
+    cout << "HCIT unprotected victim selections: "
+         << hcit_unprotected_victims << endl;
+    cout << "HCIT forced protected victim selections: "
+         << hcit_forced_protected_victims << endl;
+}
