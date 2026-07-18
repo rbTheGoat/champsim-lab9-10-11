@@ -11,7 +11,7 @@ Off-chip DRAM Size: 4096 MB Channels: 1 Width: 64-bit Data Rate: 3200 MT/s
 CPU 0 runs /home/raghav/CA_Lab9_10_11/ChampSim-master/dpc3_traces/401.bzip2-277B.champsimtrace.xz
 Initialize Adaptive HCIT replacement state
 
-Warmup complete CPU 0 instructions: 1000003 cycles: 278168 (Simulation time: 0 hr 0 min 0 sec) 
+Warmup complete CPU 0 instructions: 1000003 cycles: 278168 (Simulation time: 0 hr 0 min 1 sec) 
 
 Finished CPU 0 instructions: 1000002 cycles: 1306200 cumulative IPC: 0.765581 (Simulation time: 0 hr 0 min 2 sec) 
 
@@ -77,7 +77,7 @@ DRAM Statistics
 
 CPU 0 Branch Prediction Accuracy: 98.5709% MPKI: 2.24399 Average ROB Occupancy at Mispredict: 165.469
 
-CPU 0 Average Predictor Lookup Latency (ns): 111.171
+CPU 0 Average Predictor Lookup Latency (ns): 107.407
 CPU 0 Predictor Lookup Samples: 157017
 
 Branch types

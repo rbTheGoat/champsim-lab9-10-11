@@ -14,18 +14,18 @@ CPU 2 runs /home/raghav/CA_Lab9_10_11/ChampSim-master/dpc3_traces/605.mcf_s-1644
 CPU 3 runs /home/raghav/CA_Lab9_10_11/ChampSim-master/dpc3_traces/621.wrf_s-8100B.champsimtrace.xz
 Initialize Adaptive HCIT replacement state
 
-Warmup complete CPU 0 instructions: 1551119 cycles: 713374 (Simulation time: 0 hr 0 min 7 sec) 
-Warmup complete CPU 1 instructions: 1482980 cycles: 713374 (Simulation time: 0 hr 0 min 7 sec) 
-Warmup complete CPU 2 instructions: 1000001 cycles: 713374 (Simulation time: 0 hr 0 min 7 sec) 
-Warmup complete CPU 3 instructions: 1624093 cycles: 713373 (Simulation time: 0 hr 0 min 7 sec) 
+Warmup complete CPU 0 instructions: 1551119 cycles: 713374 (Simulation time: 0 hr 0 min 8 sec) 
+Warmup complete CPU 1 instructions: 1482980 cycles: 713374 (Simulation time: 0 hr 0 min 8 sec) 
+Warmup complete CPU 2 instructions: 1000001 cycles: 713374 (Simulation time: 0 hr 0 min 8 sec) 
+Warmup complete CPU 3 instructions: 1624093 cycles: 713373 (Simulation time: 0 hr 0 min 8 sec) 
 
 Finished CPU 0 instructions: 1000001 cycles: 994776 cumulative IPC: 1.00525 (Simulation time: 0 hr 0 min 12 sec) 
 Finished CPU 1 instructions: 1000003 cycles: 1251809 cumulative IPC: 0.798846 (Simulation time: 0 hr 0 min 13 sec) 
 Finished CPU 3 instructions: 1000001 cycles: 1560500 cumulative IPC: 0.640821 (Simulation time: 0 hr 0 min 14 sec) 
-Heartbeat CPU 0 instructions: 10000002 cycles: 9313216 heartbeat IPC: 1.07374 cumulative IPC: 0.982446 (Simulation time: 0 hr 0 min 42 sec) 
-Heartbeat CPU 3 instructions: 10000003 cycles: 10365642 heartbeat IPC: 0.964726 cumulative IPC: 0.867766 (Simulation time: 0 hr 0 min 47 sec) 
-Heartbeat CPU 1 instructions: 10000000 cycles: 10939248 heartbeat IPC: 0.91414 cumulative IPC: 0.832889 (Simulation time: 0 hr 0 min 49 sec) 
-Finished CPU 2 instructions: 1000000 cycles: 11184652 cumulative IPC: 0.0894082 (Simulation time: 0 hr 0 min 53 sec) 
+Heartbeat CPU 0 instructions: 10000002 cycles: 9313216 heartbeat IPC: 1.07374 cumulative IPC: 0.982446 (Simulation time: 0 hr 0 min 44 sec) 
+Heartbeat CPU 3 instructions: 10000003 cycles: 10365642 heartbeat IPC: 0.964726 cumulative IPC: 0.867766 (Simulation time: 0 hr 0 min 49 sec) 
+Heartbeat CPU 1 instructions: 10000000 cycles: 10939248 heartbeat IPC: 0.91414 cumulative IPC: 0.832889 (Simulation time: 0 hr 0 min 51 sec) 
+Finished CPU 2 instructions: 1000000 cycles: 11184652 cumulative IPC: 0.0894082 (Simulation time: 0 hr 0 min 56 sec) 
 
 ChampSim completed all CPUs
 
@@ -272,7 +272,7 @@ DRAM Statistics
 
 CPU 0 Branch Prediction Accuracy: 99.8969% MPKI: 0.192785 Average ROB Occupancy at Mispredict: 105.404
 
-CPU 0 Average Predictor Lookup Latency (ns): 90.7697
+CPU 0 Average Predictor Lookup Latency (ns): 92.2536
 CPU 0 Predictor Lookup Samples: 2188422
 
 Branch types
@@ -288,7 +288,7 @@ BRANCH_OTHER: 0 0%
 
 CPU 1 Branch Prediction Accuracy: 99.7805% MPKI: 0.0888587 Average ROB Occupancy at Mispredict: 173.467
 
-CPU 1 Average Predictor Lookup Latency (ns): 146.931
+CPU 1 Average Predictor Lookup Latency (ns): 140.687
 CPU 1 Predictor Lookup Samples: 398263
 
 Branch types
@@ -304,7 +304,7 @@ BRANCH_OTHER: 0 0%
 
 CPU 2 Branch Prediction Accuracy: 95.718% MPKI: 5.32399 Average ROB Occupancy at Mispredict: 112.547
 
-CPU 2 Average Predictor Lookup Latency (ns): 341.341
+CPU 2 Average Predictor Lookup Latency (ns): 344.591
 CPU 2 Predictor Lookup Samples: 124334
 
 Branch types
@@ -320,7 +320,7 @@ BRANCH_OTHER: 0 0%
 
 CPU 3 Branch Prediction Accuracy: 98.9456% MPKI: 1.22335 Average ROB Occupancy at Mispredict: 96.7233
 
-CPU 3 Average Predictor Lookup Latency (ns): 181.463
+CPU 3 Average Predictor Lookup Latency (ns): 183.822
 CPU 3 Predictor Lookup Samples: 1252705
 
 Branch types
