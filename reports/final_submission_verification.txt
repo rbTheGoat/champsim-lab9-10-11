@@ -1,0 +1,92 @@
+============================================================
+FINAL SUBMISSION VERIFICATION
+Generated: 2026-07-18T16:58:10+00:00
+Repository: /home/raghav/CA_Lab9_10_11/ChampSim-master
+============================================================
+
+SECTION 1 — Core source files
+[PASS] branch/modified_bullseye.bpred
+[PASS] branch/adaptive_bullseye.bpred
+[PASS] replacement/lru.llc_repl
+[PASS] replacement/srrip.llc_repl
+[PASS] replacement/drrip.llc_repl
+[PASS] replacement/ship.llc_repl
+[PASS] replacement/mru.llc_repl
+[PASS] replacement/random.llc_repl
+[PASS] replacement/hcit.llc_repl
+
+SECTION 2 — Design and report files
+[PASS] reports/modified_bullseye_design.md
+[PASS] reports/adaptive_bullseye_design.md
+[PASS] reports/mru_random_design.md
+[PASS] reports/adaptive_hcit_design.md
+[PASS] reports/task2_results_analysis.md
+[PASS] reports/task2_hcit_results_analysis.md
+[PASS] reports/final_assignment_report.md
+[PASS] reports/submission_checklist.md
+
+SECTION 3 — Random four-core trace evidence
+[PASS] random_trace_output
+[PASS] random_trace_output/selected_4core_traces.txt
+[PASS] Random-trace generator source found
+
+SECTION 4 — Required traces
+[PASS] Trace files available = 15
+
+SECTION 5 — Restored baseline cache configuration
+[PASS] LLC_SET restored to 4096
+[PASS] LLC_WAY restored to 16
+
+SECTION 6 — Task 1 outputs
+[PASS] results/csv/task1_single_summary_all_predictors.csv
+[PASS] results/csv/task1_four_core_summary_all_predictors.csv
+[PASS] Task 1 graphs = 74
+
+SECTION 7 — LLC-size outputs
+[PASS] results/csv/task2_llc_size_single_summary.csv
+[PASS] results/csv/task2_llc_size_four_core_summary.csv
+[PASS] LLC-size single raw results = 16
+[PASS] LLC-size four-core raw results = 4
+
+SECTION 8 — Associativity outputs
+[PASS] results/csv/task2_llc_associativity_single_summary.csv
+[PASS] results/csv/task2_llc_associativity_four_core_summary.csv
+[PASS] 8-way single raw results = 4
+[PASS] 8-way four-core raw results = 1
+
+SECTION 9 — Six-policy replacement outputs
+[PASS] results/csv/task2_replacement_policy_size_single_summary_all_policies.csv
+[PASS] results/csv/task2_replacement_policy_size_four_core_summary_all_policies.csv
+[PASS] Non-LRU single raw results = 80
+[PASS] Non-LRU four-core raw results = 20
+
+SECTION 10 — HCIT outputs
+[PASS] results/csv/task2_replacement_policy_size_single_summary_with_hcit.csv
+[PASS] results/csv/task2_replacement_policy_size_four_core_summary_with_hcit.csv
+[PASS] results/csv/task2_hcit_internal_single.csv
+[PASS] results/csv/task2_hcit_internal_four_core.csv
+[PASS] HCIT single raw results = 16
+[PASS] HCIT four-core raw results = 4
+[PASS] All HCIT results contain policy statistics
+
+SECTION 11 — Graph counts
+[PASS] results/graphs/task2/llc_size graphs = 18
+[PASS] results/graphs/task2/llc_associativity graphs = 20
+[PASS] results/graphs/task2/replacement_policy_size graphs = 24
+[PASS] results/graphs/task2/hcit_comparison graphs = 34
+
+SECTION 12 — Git status
+[PASS] Git branch: main
+[WARN] Working tree has uncommitted changes:
+?? reports/final_assignment_report.md
+?? reports/final_graph_inventory.txt
+?? reports/final_submission_verification.txt
+?? scripts/generate_final_assignment_report.py
+?? scripts/verify_final_submission.sh
+[PASS] Origin: https://github.com/rbTheGoat/champsim-lab9-10-11.git
+
+============================================================
+SUMMARY
+Failures: 0
+Warnings: 1
+============================================================
