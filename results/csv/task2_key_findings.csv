@@ -1,0 +1,25 @@
+section,scope,comparison,metric,baseline_value,candidate_value,absolute_change,percent_change,interpretation
+LLC size,single-core,1 MB to 8 MB,geomean_ipc,0.6976128171714356,0.8527312440844426,0.15511842691300692,22.235604492181682,large IPC change
+LLC size,single-core,1 MB to 8 MB,weighted_llc_miss_percent,25.18810876395023,18.142650346037577,-7.045458417912652,-27.971367298509787,large LLC-miss change
+LLC size,four-core,1 MB to 8 MB,sum_ipc,2.1158987,3.5949129999999996,1.4790142999999998,69.90005239853873,large aggregate-IPC change
+LLC size,four-core,1 MB to 8 MB,llc_miss_percent,92.79763272810848,24.73940236275191,-68.05823036535656,-73.34048117882826,large shared-LLC-miss change
+Associativity,single-core,16-way to 8-way at 4 MB,geomean_ipc,0.832925571055153,0.8328467766246901,-7.87944304628807e-05,-0.009459960553625897,negligible IPC effect
+Associativity,single-core,16-way to 8-way at 4 MB,weighted_llc_miss_percent,18.40757160270467,18.441206228586804,0.03363462588213295,0.1827216897919926,negligible conflict/locality effect
+Associativity,four-core,16-way to 8-way at 4 MB,sum_ipc,3.326025,3.319878,-0.0061469999999999025,-0.1848152073420946,negligible aggregate-IPC effect
+Associativity,four-core,16-way to 8-way at 4 MB,llc_miss_percent,45.57941847045909,47.43938270587912,1.8599642354200299,4.080710763401926,moderate shared-cache effect
+Replacement policy,single-core,MRU vs LRU at 1 MB,geomean_ipc,0.6976128171714356,0.6243395947467689,-0.07327322242466672,-10.503422617973504,effect of evicting the most recently used block
+Replacement policy,single-core,Random vs LRU at 1 MB,geomean_ipc,0.6976128171714356,0.664732890298979,-0.032879926872456666,-4.713205672707208,effect of replacement without locality state
+Replacement policy,four-core,MRU vs LRU at 1 MB,sum_ipc,2.1158987,1.5832106,-0.5326880999999999,-25.175501076681975,shared-cache effect of MRU
+Replacement policy,four-core,Random vs LRU at 1 MB,sum_ipc,2.1158987,1.9951373,-0.12076139999999991,-5.70733372065496,shared-cache effect of Random replacement
+Replacement policy,single-core,MRU vs LRU at 2 MB,geomean_ipc,0.7759630028904818,0.6827348486274695,-0.09322815426301234,-12.014510217076731,effect of evicting the most recently used block
+Replacement policy,single-core,Random vs LRU at 2 MB,geomean_ipc,0.7759630028904818,0.7349047797047346,-0.041058223185747256,-5.291260412262484,effect of replacement without locality state
+Replacement policy,four-core,MRU vs LRU at 2 MB,sum_ipc,3.216118,1.603551,-1.6125669999999999,-50.140168986336946,shared-cache effect of MRU
+Replacement policy,four-core,Random vs LRU at 2 MB,sum_ipc,3.216118,2.7548114,-0.4613065999999999,-14.343584408283526,shared-cache effect of Random replacement
+Replacement policy,single-core,MRU vs LRU at 4 MB,geomean_ipc,0.832925571055153,0.7762112944513392,-0.056714276603813785,-6.809044958479056,effect of evicting the most recently used block
+Replacement policy,single-core,Random vs LRU at 4 MB,geomean_ipc,0.832925571055153,0.810656641032522,-0.022268930022630973,-2.6735798247159845,effect of replacement without locality state
+Replacement policy,four-core,MRU vs LRU at 4 MB,sum_ipc,3.326025,1.6372874,-1.6887376,-50.77344878646432,shared-cache effect of MRU
+Replacement policy,four-core,Random vs LRU at 4 MB,sum_ipc,3.326025,3.131081,-0.194944,-5.861170616576844,shared-cache effect of Random replacement
+Replacement policy,single-core,MRU vs LRU at 8 MB,geomean_ipc,0.8527312440844426,0.8455102857505082,-0.007220958333934324,-0.8468035367564486,effect of evicting the most recently used block
+Replacement policy,single-core,Random vs LRU at 8 MB,geomean_ipc,0.8527312440844426,0.8438178290516942,-0.00891341503274834,-1.0452783446815606,effect of replacement without locality state
+Replacement policy,four-core,MRU vs LRU at 8 MB,sum_ipc,3.5949129999999996,2.3149801,-1.2799328999999995,-35.604002099633554,shared-cache effect of MRU
+Replacement policy,four-core,Random vs LRU at 8 MB,sum_ipc,3.5949129999999996,3.512009,-0.08290399999999964,-2.306147603572038,shared-cache effect of Random replacement
